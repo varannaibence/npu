@@ -37,3 +37,18 @@ jobs:
           else
             gh release create "${GITHUB_REF_NAME}" "dist/npu.user.js" --repo "${GITHUB_REPOSITORY}" --title "${GITHUB_REF_NAME}" --verify-tag --generate-notes --draft=false
           fi
+      - name: Sync latest releases into README
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --paginate --slurp "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+            | jq 'add | map(select(.draft == false and .prerelease == false)) | .[0:3]' \
+            | node tools/sync-releases.js
+          if git diff --quiet -- README.md; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "docs: sync latest releases"
+          git push origin "HEAD:${{ github.event.repository.default_branch }}"

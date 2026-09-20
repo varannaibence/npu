@@ -77,6 +77,7 @@ A `.github/workflows/release.yml` `v*` tag pusholásakor:
 1. Node 20 környezetben lefuttatja az `npm ci` parancsot;
 2. buildel és lefuttatja az `npm run verify` ellenőrzést;
 3. a `dist/npu.user.js` fájlt `npu.user.js` néven feltölti a GitHub release-be.
+4. a README legfeljebb három legfrissebb stabil release-ét frissíti.
 
 Release előtt lokálisan legalább ezt futtasd:
 

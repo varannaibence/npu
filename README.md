@@ -84,6 +84,19 @@ fájlt, és engedélyezd a Tampermonkey telepítését.
 Fejlesztéshez ne a release assetet telepítsd. A helyi loader, a build, a tesztek
 és a release-folyamat a [fejlesztői útmutatóban](docs/DEVELOPMENT.md) található.
 
+<!-- releases:start -->
+## Legfrissebb kiadások
+
+A legutóbbi három stabil kiadás. A **Telepítés** link Tampermonkey mellett
+közvetlenül telepíthető.
+
+| Verzió | Megjelent | Telepítés |
+| --- | --- | --- |
+| [v3.0.0](https://github.com/varannaibence/npu/releases/tag/v3.0.0) | 2026. szept. 20. | [Telepítés](https://github.com/varannaibence/npu/releases/download/v3.0.0/npu.user.js) |
+
+[Összes kiadás megtekintése](https://github.com/varannaibence/npu/releases)
+<!-- releases:end -->
+
 ## A Rajtoló használata
 
 1. Jelentkezz be, és maradj bejelentkezve a tervezett kezdésig.
