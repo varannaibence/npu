@@ -30,16 +30,25 @@ nem működik.
 
 ## Mit tud?
 
+Az **alapból kikapcsolva** jelölésű funkciókat az **NPU beállítások** panelben
+kapcsolhatod be. A módosítások a következő oldalbetöltéskor lépnek életbe.
+
 **Tárgyfelvétel**
 
-- Beállítástól függően magától elindítja a tárgyak listázását, ahelyett hogy
-  minden alkalommal rá kellene nyomni a keresésre.
+- **Tárgylista automatikus betöltése** *(alapból kikapcsolva)*: magától elindítja
+  a tárgyak listázását, ahelyett hogy minden alkalommal rá kellene nyomni a
+  keresésre. Így nem indítunk a felhasználó helyett automatikus keresést és extra
+  kérést.
 - Egy lapon sokkal több sort tölt be, így jóval kevesebbet kell lapozni.
 - A kurzusokra kiírja a férőhelyet (`11 / 999`), és színnel jelzi, hogy van-e még
   benne hely, csak várólista van-e, vagy egyáltalán nem lehet rá jelentkezni.
 - A lenyitott kurzusoknál jelzi, ha az időpont ütközik a Neptun saját
   órarendtervezőjében lévő vagy már felvett kurzussal, és azt is kiírja, hogy
   pontosan mivel és mikor.
+- **Táblázatos kurzuslista** *(alapból kikapcsolva)*: a kinyitott tárgy kurzusait
+  áttekinthető, szűrhető és rendezhető táblázatban jeleníti meg. A natív listát
+  NPU-specifikus nézetre cseréli, ezért nem akarjuk automatikusan megtörni a
+  megszokott munkafolyamatot; kinek melyik megjelenítés kényelmes, szubjektív.
 - A **Betelt kurzusok hátra** gombbal a már lenyitott tárgyak kurzuslistájában
   előre rendezi azokat, amikbe még lehet jelentkezni; újra megnyomva visszaáll az
   eredeti sorrend. A lenyitott tárgy fejlécén a már betöltött kurzusok állapota is
@@ -50,12 +59,15 @@ időpontban sorban megpróbál beküldeni. Részletesen lentebb.
 
 **Máshol**
 
-- Minden funkció külön ki- és bekapcsolható a lap alján, az **NPU beállítások**
+- A funkciók külön ki- és bekapcsolhatók a lap alján, az **NPU beállítások**
   pontban.
-- A nagy asztali kijelzőkre készült **Kompakt tárgyfelvételi nézet** külön
-  bekapcsolható; mobilon és a Neptun többi oldalán nem változtat semmit.
+- A nagy asztali kijelzőkre készült **Kompakt tárgyfelvételi nézet** *(alapból
+  kikapcsolva)* külön bekapcsolható; mobilon és a Neptun többi oldalán nem
+  változtat semmit. Ez NPU-specifikus elrendezés, ezért alapból nem írjuk át a
+  megszokott felületet; hogy kinek melyik nézet jön be, szubjektív.
 - A fejlécben tárgytípusonként bontja a ténylegesen felvett krediteket.
-- Bekapcsolva, valódi használat mellett csendben életben tartja a munkamenetet;
+- **Munkamenet életben tartása** *(alapból kikapcsolva, mert háttérforgalmat
+  indít)*: aktív használat mellett megújítja a közeli lejáratú munkamenetet;
   tétlen lapot nem tart életben.
 - Bejelentkezés után felajánlja, hogy visszavigyen arra az oldalra, ahol
   legutóbb jártál.
@@ -90,9 +102,79 @@ Fejlesztéshez ne a release assetet telepítsd. A helyi loader, a build, a teszt
 A legutóbbi három stabil kiadás. A **Telepítés** link Tampermonkey mellett
 közvetlenül telepíthető.
 
-| Verzió | Megjelent | Telepítés |
-| --- | --- | --- |
-| [v3.0.0](https://github.com/varannaibence/npu/releases/tag/v3.0.0) | 2026. szept. 20. | [Telepítés](https://github.com/varannaibence/npu/releases/download/v3.0.0/npu.user.js) |
+<details open>
+<summary><strong>v3.0.0</strong> · 2026. szept. 20.</summary>
+
+Az első v3-fejlesztési kiadás az új, Angular-alapú Neptun-felülethez. A v3 külön
+kódra épül; a régi WebForms-modulok nem részei ennek a verziónak.
+
+**Tárgyfelvétel**
+
+- A kurzussorokon megjelenik, ha az adott időpont a Neptun natív tervezőjében
+  lévő vagy már felvett kurzussal ütközik, a másik tárgy és időpont nevével.
+- Alapból kikapcsolt, beállításból bekapcsolható, csak asztali tárgyfelvételnél
+  működő kompakt nézet. Ez NPU-specifikus elrendezés, ezért nem írja át
+  automatikusan a megszokott felületet; hogy kinek melyik nézet kényelmes,
+  szubjektív.
+- Alapból kikapcsolt táblázatos kurzuslista, mert a natív kurzuslistát NPU-
+  specifikus nézetre cseréli, és a megszokott munkafolyamatot nem akarjuk
+  automatikusan megtörni.
+- A Rajtoló és a kurzussori jelzések ugyanazt az órarendi ütközésvizsgálatot
+  használják.
+- A modulkapcsolók már alapból kikapcsolt, külön bekapcsolható modulokat is
+  kompatibilisen tudnak tárolni.
+
+**További tárgyfelvételi változások**
+
+- Alapból kikapcsolt, beállítással bekapcsolható tárgylista-automatikus betöltés,
+  hogy ne indítson a felhasználó helyett automatikus keresést és extra kérést.
+- A kurzusok mellett látszik a férőhely, a betelt állapot és a várólista;
+  a tárgyakon az, hogy hány kurzusuk telt már be.
+- A „Betelt kurzusok hátra" kapcsoló előre rendezi azt, amire még lehet
+  jelentkezni, és a kapcsolása vissza is fordítható.
+- A listák egy lapon lényegesen több sort töltenek be.
+
+**Rajtoló**
+
+- Saját, felhasználó és félév szerint tárolt terv, soros beküldéssel.
+- Időszakválasztó a Neptun saját tárgyfelvételi időszakaiból, szerverhez
+  igazított visszaszámlálással.
+- Órarendütközés-jelzés és kredit-előrejelzés a terven belül.
+- A várólistára kerülést külön jelzi a sikeres felvételtől.
+- Ismeretlen szerverválasznál megáll, nem könyvel el találgatott sikert.
+
+**Egyéb**
+
+- Kreditbontás tárgytípusonként a fejléc saját kártyájában.
+- Alapból kikapcsolt munkamenet-frissítés, mert háttérforgalmat indít; aktív
+  használat mellett megújítja a közeli lejáratú munkamenetet, tétlen lapot nem
+  tart életben.
+- Bejelentkezés után felajánlja a visszatérést a legutóbbi oldalra.
+- Az NPU neve és verziója a bejelentkező oldalon és a láblécben, a lábléc
+  hibabejelentő linkjével együtt.
+
+**Ami szándékosan kimaradt**
+
+- `autoLogin`: a 2FA, a karbantarthatóság és a jelszókezelés kockázatai miatt.
+- A bizonytalan adatokra épülő mintatantervi hiány-nézet.
+- Az üzenetek tömeges olvasottra állítása kimaradt. Az alapja elkészült, de az
+  élő oldalon nem találtunk hozzá biztonságosan használható lapozási végpontot.
+
+**Adatvédelem**
+
+- A régi `neptun.users` GM-kulcsot az új kód nem olvassa, nem importálja és nem
+  törli. A saját `data.users` rekordokban maradt érzékeny bejelentkezési
+  mezőket induláskor kitisztítja, a nem érzékeny terveket és adatokat megtartja.
+
+**Korlátok**
+
+- Az intézményenkénti működési állapotot a [TESTED.md](docs/TESTED.md) tartalmazza.
+- A sikeres és a ténylegesen betelt tárgyfelvételi válasz éles ellenőrzése még
+  hátra van; ezek csak nyitott tárgyfelvételi időszakban mérhetők.
+
+[Release megnyitása](https://github.com/varannaibence/npu/releases/tag/v3.0.0) · [Telepítés](https://github.com/varannaibence/npu/releases/download/v3.0.0/npu.user.js)
+
+</details>
 
 [Összes kiadás megtekintése](https://github.com/varannaibence/npu/releases)
 <!-- releases:end -->

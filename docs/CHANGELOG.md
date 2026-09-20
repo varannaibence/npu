@@ -9,7 +9,13 @@ kódra épül; a régi WebForms-modulok nem részei ennek a verziónak.
 
 - A kurzussorokon megjelenik, ha az adott időpont a Neptun natív tervezőjében
   lévő vagy már felvett kurzussal ütközik, a másik tárgy és időpont nevével.
-- Beállításból bekapcsolható, csak asztali tárgyfelvételnél működő kompakt nézet.
+- Alapból kikapcsolt, beállításból bekapcsolható, csak asztali tárgyfelvételnél
+  működő kompakt nézet. Ez NPU-specifikus elrendezés, ezért nem írja át
+  automatikusan a megszokott felületet; hogy kinek melyik nézet kényelmes,
+  szubjektív.
+- Alapból kikapcsolt táblázatos kurzuslista, mert a natív kurzuslistát NPU-
+  specifikus nézetre cseréli, és a megszokott munkafolyamatot nem akarjuk
+  automatikusan megtörni.
 - A Rajtoló és a kurzussori jelzések ugyanazt az órarendi ütközésvizsgálatot
   használják.
 - A modulkapcsolók már alapból kikapcsolt, külön bekapcsolható modulokat is
@@ -17,7 +23,8 @@ kódra épül; a régi WebForms-modulok nem részei ennek a verziónak.
 
 **További tárgyfelvételi változások**
 
-- Beállítással bekapcsolható a tárgylista automatikus betöltése.
+- Alapból kikapcsolt, beállítással bekapcsolható tárgylista-automatikus betöltés,
+  hogy ne indítson a felhasználó helyett automatikus keresést és extra kérést.
 - A kurzusok mellett látszik a férőhely, a betelt állapot és a várólista;
   a tárgyakon az, hogy hány kurzusuk telt már be.
 - A „Betelt kurzusok hátra" kapcsoló előre rendezi azt, amire még lehet
@@ -36,8 +43,9 @@ kódra épül; a régi WebForms-modulok nem részei ennek a verziónak.
 **Egyéb**
 
 - Kreditbontás tárgytípusonként a fejléc saját kártyájában.
-- Munkamenet-frissítés valódi használathoz és közeli lejárathoz kötve; tétlen
-  lapot nem tart életben vak háttérforgalommal.
+- Alapból kikapcsolt munkamenet-frissítés, mert háttérforgalmat indít; aktív
+  használat mellett megújítja a közeli lejáratú munkamenetet, tétlen lapot nem
+  tart életben.
 - Bejelentkezés után felajánlja a visszatérést a legutóbbi oldalra.
 - Az NPU neve és verziója a bejelentkező oldalon és a láblécben, a lábléc
   hibabejelentő linkjével együtt.

@@ -4,6 +4,7 @@ const path = require("path");
 const START = "<!-- releases:start -->";
 const END = "<!-- releases:end -->";
 const README_PATH = path.join(__dirname, "..", "README.md");
+const CHANGELOG_PATH = path.join(__dirname, "..", "docs", "CHANGELOG.md");
 
 function stableReleases(releases) {
   if (!Array.isArray(releases)) {
@@ -14,15 +15,18 @@ function stableReleases(releases) {
     .slice(0, 3);
 }
 
-function tableText(value) {
+function inlineText(value) {
   return String(value || "")
     .replace(/\s+/g, " ")
-    .replace(/\|/g, "\\|")
     .trim();
 }
 
 function encodeSegment(value) {
   return encodeURIComponent(String(value));
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function publishedDate(value) {
@@ -32,16 +36,57 @@ function publishedDate(value) {
     : new Intl.DateTimeFormat("hu-HU", { year: "numeric", month: "short", day: "numeric" }).format(date);
 }
 
-function renderReleaseBlock(releases, repository) {
-  const rows = stableReleases(releases).map(release => {
-    const tag = tableText(release.tag_name);
+function changelogNotes(changelog, tagName) {
+  const version = String(tagName).replace(/^v/i, "");
+  const heading = new RegExp(`^##\\s+v?${escapeRegExp(version)}(?:\\s|$)[^\\n]*$`, "im");
+  const match = heading.exec(changelog);
+  if (!match) {
+    return "";
+  }
+  const section = changelog.slice(match.index + match[0].length);
+  const nextHeading = section.search(/^##\s+/m);
+  return section.slice(0, nextHeading < 0 ? section.length : nextHeading).trim();
+}
+
+function rewriteChangelogLinks(notes) {
+  return notes.replace(/\]\(([^)\s]+)([^)]*)\)/g, (match, target, suffix) => {
+    if (/^(?:[a-z][a-z\d+.-]*:|[/#])/i.test(target)) {
+      return match;
+    }
+    const anchorIndex = target.search(/[?#]/);
+    const pathname = anchorIndex < 0 ? target : target.slice(0, anchorIndex);
+    const anchor = anchorIndex < 0 ? "" : target.slice(anchorIndex);
+    return `](${path.posix.normalize(path.posix.join("docs", pathname))}${anchor}${suffix})`;
+  });
+}
+
+function releaseNotes(release, changelog) {
+  const changelogRelease = changelogNotes(changelog, release.tag_name);
+  const notes = changelogRelease ? rewriteChangelogLinks(changelogRelease) : String(release.body || "").trim();
+  return (notes || "Nincs külön kiadási megjegyzés.")
+    .replace(/<!--\s*releases:(?:start|end)\s*-->/gi, "")
+    .replace(/<\/details>/gi, "");
+}
+
+function renderReleaseBlock(releases, repository, changelog = "") {
+  const cards = stableReleases(releases).map((release, index) => {
+    const tag = inlineText(release.tag_name);
     const releaseUrl =
       release.html_url || `https://github.com/${repository}/releases/tag/${encodeSegment(release.tag_name)}`;
     const installUrl = `https://github.com/${repository}/releases/download/${encodeSegment(release.tag_name)}/npu.user.js`;
-    return `| [${tag}](${releaseUrl}) | ${publishedDate(release.published_at)} | [Telepítés](${installUrl}) |`;
+    return [
+      `<details${index === 0 ? " open" : ""}>`,
+      `<summary><strong>${tag}</strong> · ${publishedDate(release.published_at)}</summary>`,
+      "",
+      releaseNotes(release, changelog),
+      "",
+      `[Release megnyitása](${releaseUrl}) · [Telepítés](${installUrl})`,
+      "",
+      "</details>",
+    ].join("\n");
   });
 
-  const body = rows.length ? rows : ["| Még nincs publikált stabil kiadás |  |  |"];
+  const body = cards.length ? cards : ["Még nincs publikált stabil kiadás."];
   return [
     START,
     "## Legfrissebb kiadások",
@@ -49,8 +94,6 @@ function renderReleaseBlock(releases, repository) {
     "A legutóbbi három stabil kiadás. A **Telepítés** link Tampermonkey mellett",
     "közvetlenül telepíthető.",
     "",
-    "| Verzió | Megjelent | Telepítés |",
-    "| --- | --- | --- |",
     ...body,
     "",
     `[Összes kiadás megtekintése](https://github.com/${repository}/releases)`,
@@ -67,9 +110,9 @@ function replaceReleaseBlock(source, replacement) {
   return `${source.slice(0, start)}${replacement}${source.slice(end + END.length)}`;
 }
 
-function syncReadme(releases, repository, readmePath) {
+function syncReadme(releases, repository, readmePath, changelog = "") {
   const source = fs.readFileSync(readmePath, "utf8");
-  const next = replaceReleaseBlock(source, renderReleaseBlock(releases, repository));
+  const next = replaceReleaseBlock(source, renderReleaseBlock(releases, repository, changelog));
   if (next !== source) {
     fs.writeFileSync(readmePath, next);
     return true;
@@ -81,7 +124,8 @@ if (require.main === module) {
   try {
     const repository = process.env.GITHUB_REPOSITORY || "varannaibence/npu";
     const releases = JSON.parse(fs.readFileSync(0, "utf8"));
-    const changed = syncReadme(releases, repository, README_PATH);
+    const changelog = fs.readFileSync(CHANGELOG_PATH, "utf8");
+    const changed = syncReadme(releases, repository, README_PATH, changelog);
     console.log(changed ? "README release list updated." : "README release list already current.");
   } catch (error) {
     console.error(error.message);
@@ -89,4 +133,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { END, START, renderReleaseBlock, replaceReleaseBlock, stableReleases };
+module.exports = { END, START, changelogNotes, renderReleaseBlock, replaceReleaseBlock, stableReleases };
