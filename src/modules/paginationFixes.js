@@ -1,28 +1,37 @@
-const $ = window.jQuery;
-const utils = require("../utils");
+const interceptor = require("../interceptor");
 
-// Set all paginators to 500 items per page
-function fixPagination() {
-  window.setInterval(() => {
-    const pageSelect = $(".grid_pagerpanel select");
-    pageSelect.each(function () {
-      const e = $(this);
-      e.hide();
-      $(".link_pagesize", e.closest("tr")).html("");
-      if (e.attr("data-listing") !== "1" && e.val() !== "500") {
-        e.attr("data-listing", "1").val("500");
-        const onChange = this.getAttributeNode("onchange");
-        if (onChange) {
-          utils.runEval(onChange.value);
-        }
-      }
-    });
-  }, 100);
+// How many rows to ask for instead of the default page size
+const PAGE_SIZE = 500;
+const TARGET_ENDPOINT = "SubjectApplication/SchedulableSubjects";
+const TARGET_PATH = `/hallgato_ng/api/${TARGET_ENDPOINT}`;
+
+// The API pages with absolute row indices, so the window is moved rather than
+// capped - that keeps the offset meaningful on pages after the first.
+function widen(url, endpoint) {
+  if (endpoint ? endpoint !== TARGET_ENDPOINT : typeof url !== "string" || url.indexOf(TARGET_PATH) === -1) {
+    return;
+  }
+  if (url.indexOf("sortAndPage.lastRow=") === -1) {
+    return;
+  }
+  const firstRow = parseInt((/sortAndPage\.firstRow=(\d+)/.exec(url) || [])[1] || "0", 10);
+  return url.replace(/sortAndPage\.lastRow=\d+/, `sortAndPage.lastRow=${firstRow + PAGE_SIZE}`);
 }
 
+// Shown in the settings panel; `id` is also the key the switch is stored under.
+const meta = {
+  id: "pagination",
+  name: "Hosszabb listák",
+  description: "Egy lapon jóval több sort tölt be, így kevesebbet kell lapozni.",
+};
+
 module.exports = {
-  shouldActivate: () => utils.isLoggedIn(),
+  meta,
+  shouldActivate: () => true,
   initialize: () => {
-    fixPagination();
+    // Only the measured subject catalogue is widened. Unknown paginated endpoints
+    // keep Neptun's own page size and response contract.
+    interceptor.onRequest(TARGET_ENDPOINT, widen);
   },
+  widen,
 };

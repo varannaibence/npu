@@ -1,6 +1,6 @@
 module.exports = {
   root: true,
-  ignorePatterns: ["**/*.js", "!src/**/*.js"],
+  ignorePatterns: ["**/*.js", "!src/**/*.js", "!test/**/*.js", "!selfcheck.js", "!tools/**/*.js", "!webpack.config.js"],
   extends: ["eslint:recommended", "prettier"],
   env: {
     browser: true,
@@ -12,6 +12,9 @@ module.exports = {
   },
   globals: {
     GM: true,
+    GM_getValue: true,
+    GM_setValue: true,
+    GM_registerMenuCommand: true,
     unsafeWindow: true,
     exportFunction: true,
   },

@@ -1,53 +1,63 @@
 const utils = require("./utils");
 const storage = require("./storage");
+const interceptor = require("./interceptor");
+const router = require("./router");
+const settings = require("./settings");
+const settingsPanel = require("./settingsPanel");
 
+// Feature modules, each exporting { shouldActivate, initialize }
 const modules = [
-  // Login page
-  require("./modules/autoLogin"),
-  require("./modules/loginRetry"),
-  require("./modules/loginBanner"),
-
-  // Automatic redirect to the last visited page
-  require("./modules/backToLastPage"),
-
-  // All authenticated pages
-  require("./modules/hideHeader"),
-  require("./modules/pageTitle"),
-  require("./modules/mainMenuFixes"),
-  require("./modules/termSelectorFixes"),
   require("./modules/paginationFixes"),
-  require("./modules/officialMessageAlert"),
-  require("./modules/hideSurveyPopup"),
-  require("./modules/infiniteSession"),
-  require("./modules/loadingIndicator"),
-
-  // Timetable page
-  require("./modules/timetableFixes"),
-
-  // Markbook page
-  require("./modules/markListFixes"),
-
-  // Advance page
-  require("./modules/advanceListFixes"),
-
-  // Course signup page
-  require("./modules/courseListFixes"),
+  require("./modules/loginBanner"),
   require("./modules/courseAutoList"),
-  require("./modules/courseStore"),
-
-  // Exams page
-  require("./modules/examListFixes"),
-
-  // Signed exams page
-  require("./modules/signedExamListFixes"),
+  require("./modules/backToLastPage"),
+  require("./modules/occupancy"),
+  require("./modules/courseConflictHints"),
+  require("./modules/compactSubjectRegistration"),
+  require("./modules/subjectRegistrationView"),
+  require("./modules/infiniteSession"),
+  require("./modules/rajtolo"),
+  require("./modules/creditBreakdown"),
+  require("./modules/footerBranding"),
 ];
 
-(async () => {
-  await storage.initialize();
+// Before anything else: Angular fires its first API call almost immediately.
+interceptor.install();
+router.install();
 
-  modules.forEach(module => {
-    if (module.shouldActivate() && (utils.isNeptunPage() || module.runOutsideNeptun)) {
-      module.initialize();
-    }
-  });
-})();
+// UserInfo runs on every page load, Authenticate only on a fresh login.
+// Subscribing to both covers the reload case too.
+interceptor.onResponse(/^(UserInfo|Account\/Authenticate)$/, json => {
+  const code = utils.findProp(json, "neptunCode");
+  if (code) {
+    utils.setNeptunCode(code);
+  }
+});
+
+// A changed or missing auth header is a user-state boundary. Do not let a later
+// account reuse the previous account's in-memory plan or registration baseline.
+interceptor.onAuthChange(() => {
+  utils.setNeptunCode(null);
+});
+
+// Synchronous on purpose: a module registering an interceptor handler must do so
+// before the app's first request, and awaiting anything here would lose that race.
+// Modules read stored data when they act, not while initializing.
+const ready = storage.initialize();
+
+// The switches are read synchronously, before anything initializes: a module that
+// registers an interceptor handler must do so before Angular's first request, so
+// there is no room to await storage here. An unreadable store means everything stays
+// on, which is how the script behaved before the switches existed.
+settingsPanel.setRegistry(modules);
+// A second way in, independent of the page's own footer.
+settingsPanel.registerMenuCommand();
+const enabledFlags = settings.readFlags();
+
+modules.forEach(module => {
+  if (settings.isEnabled(module, enabledFlags) && module.shouldActivate()) {
+    module.initialize();
+  }
+});
+
+module.exports = { ready };

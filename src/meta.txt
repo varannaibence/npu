@@ -2,20 +2,27 @@
 // @name           Neptun PowerUp!
 // @namespace      http://example.org
 // @description    Felturbózza a Neptun-odat
+// @author         Mate Solymosi; új Neptun átírás: Varannai Bence
 // @version        <version>
-// @downloadURL    https://github.com/solymosi/npu/releases/latest/download/npu.user.js
-// @include        https://*neptun*/*hallgato*/*
-// @include        https://*neptun*/*Hallgatoi*/*
-// @include        https://*neptun*/*oktato*/*
-// @include        https://*hallgato*.*neptun*/*
-// @include        https://*oktato*.*neptun*/*
-// @include        https://netw*.nnet.sze.hu/hallgato/*
-// @include        https://nappw.dfad.duf.hu/hallgato/*
-// @include        https://host.sdakft.hu/*
-// @include        https://neptun.ejf.hu/ejfhw/*
-// @grant          GM.xmlHttpRequest
+// @downloadURL    https://github.com/varannaibence/npu/releases/latest/download/npu.user.js
+// The NG URL pattern is broad enough to load on NG hosts. See docs/TESTED.md for
+// the measured compatibility boundary; do not infer support for another
+// institution from this include alone.
+// @include        https://*neptun*/hallgato_ng/*
+// The interceptor has to be in place before Angular bootstraps and fires its first
+// API call, so this must not be left at Tampermonkey's document-end default.
+// @run-at         document-start
+// unsafeWindow is needed to reach the page's real fetch - a property assigned on the
+// sandboxed window never reaches the page (see interceptor.js).
+// @grant          unsafeWindow
 // @grant          GM.getValue
 // @grant          GM.setValue
+// Prefer the synchronous pair for module switches at document-start. Managers that
+// only expose GM.getValue/GM.setValue use the non-sensitive settings cache instead.
+// @grant          GM_getValue
+// @grant          GM_setValue
+// The manager's own menu is the fallback way into the settings: the footer link
+// depends on a page layout measured at one institution.
+// @grant          GM_registerMenuCommand
 // @grant          GM.info
-// @require        https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js
 // ==/UserScript==

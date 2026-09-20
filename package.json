@@ -1,25 +1,33 @@
 {
   "name": "npu",
-  "version": "2.4.1",
+  "version": "3.0.0",
   "description": "Felturbózza a Neptun-odat",
-  "main": "npu.user.js",
+  "main": "dist/npu.user.js",
   "scripts": {
     "start": "webpack-cli --watch",
     "build": "webpack-cli",
     "verify": "run-s verify:*",
     "verify:eslint": "eslint .",
-    "verify:prettier": "prettier -c src/**/*.js"
+    "verify:prettier": "prettier -c \"src/**/*.js\" \"test/**/*.js\" \"tools/**/*.js\" selfcheck.js webpack.config.js",
+    "verify:selfcheck": "node selfcheck.js",
+    "test": "node selfcheck.js",
+    "selfcheck": "node selfcheck.js",
+    "dev": "node tools/dev-loader.js && webpack-cli --watch",
+    "dev:loader": "node tools/dev-loader.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/solymosi/npu.git"
+    "url": "git+https://github.com/varannaibence/npu.git"
   },
   "author": "Mate Solymosi",
+  "contributors": [
+    "Varannai Bence (rewrite for the new Neptun)"
+  ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/solymosi/npu/issues"
+    "url": "https://github.com/varannaibence/npu/issues"
   },
-  "homepage": "https://github.com/solymosi/npu#readme",
+  "homepage": "https://github.com/varannaibence/npu#readme",
   "devDependencies": {
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^8.10.0",

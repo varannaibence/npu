@@ -14,6 +14,11 @@ module.exports = {
   optimization: {
     minimize: false,
   },
+  watchOptions: {
+    aggregateTimeout: 300,
+    poll: 1000,
+    ignored: /node_modules/,
+  },
   plugins: [
     new webpack.BannerPlugin({
       banner: () => {
@@ -28,20 +33,4 @@ module.exports = {
       raw: true,
     }),
   ],
-  module: {
-    rules: [
-      {
-        test: /\.(png|jpe?g|gif|svg|ico)$/,
-        use: "url-loader",
-      },
-      {
-        test: /\.scss$/,
-        use: [
-          "extract-loader",
-          "css-loader",
-          "sass-loader",
-        ],
-      },
-    ],
-  },
 };

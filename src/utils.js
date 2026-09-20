@@ -1,29 +1,55 @@
-const $ = window.jQuery;
+// The Neptun code of the current user. The new UI hands it to us in the API
+// response, so index.js feeds it in and storage.js reads it back out.
+let neptunCode = null;
+const neptunCodeListeners = new Set();
 
-// Verify that we are indeed on a Neptun page
-function isNeptunPage() {
-  return document.title.toLowerCase().indexOf("neptun.net") !== -1;
-}
-
-// Returns whether we are on the login page
-function isLoginPage() {
-  return $("td.login_left_side").size() > 0;
-}
-
-// Returns whether we are authenticated
-function isLoggedIn() {
-  return !!getNeptunCode();
-}
-
-// Parses and returns the Neptun code of the current user
+// Null before one has been captured.
 function getNeptunCode() {
-  if ($("#upTraining_topname").size() > 0) {
-    const input = $("#upTraining_topname").text();
-    return input.substring(input.indexOf(" - ") + 3).toUpperCase();
+  return neptunCode;
+}
+
+function onNeptunCodeChange(listener) {
+  if (typeof listener !== "function") {
+    return () => {};
+  }
+  neptunCodeListeners.add(listener);
+  return () => neptunCodeListeners.delete(listener);
+}
+
+function setNeptunCode(code) {
+  const next = code ? String(code).toUpperCase() : null;
+  if (next === neptunCode) {
+    return;
+  }
+  const previous = neptunCode;
+  neptunCode = next;
+  neptunCodeListeners.forEach(listener => {
+    try {
+      listener(next, previous);
+    } catch (e) {
+      // One observer must not break identity capture for the page or other modules.
+    }
+  });
+}
+
+// Finds a property by name anywhere in a nested response body. A recursive scan
+// because only Account/Authenticate's shape is measured; pin it to an exact path
+// once UserInfo's body is known too.
+function findProp(value, name, depth = 0) {
+  if (depth > 5 || !value || typeof value !== "object") {
+    return undefined;
+  }
+  if (!Array.isArray(value) && typeof value[name] !== "undefined" && value[name] !== null) {
+    return value[name];
+  }
+  for (const key of Object.keys(value)) {
+    const found = findProp(value[key], name, depth + 1);
+    if (typeof found !== "undefined") {
+      return found;
+    }
   }
 }
 
-// Parses and returns the first-level domain of the site
 function getDomain() {
   const host = location.host.split(".");
   const tlds = "at co com edu eu gov hu hr info int mil net org ro rs sk si ua uk".split(" ");
@@ -36,58 +62,38 @@ function getDomain() {
   }
 }
 
-// Parses and returns the sanitized name of the current training
-function getTraining() {
-  if ($("#lblTrainingName").size() > 0) {
-    return $("#lblTrainingName")
-      .text()
-      .replace(/[^a-zA-Z0-9]/g, "");
-  }
-}
-
-// Returns the ID of the current page
-function getPageId() {
-  const result = /ctrl=([a-zA-Z0-9_]+)/g.exec(window.location.href);
-  return result ? result[1] : null;
-}
-
-// Returns whether the specified ID is the current page
-function isPageId(...ctrls) {
-  return ctrls.includes(getPageId());
-}
-
-// Get the current AJAX grid instance
-function getAjaxInstance(element) {
-  const instanceId = getAjaxInstanceId(element);
-  return instanceId && unsafeWindow[getAjaxInstanceId(element)];
-}
-
-function getAjaxInstanceId(element) {
-  const ajaxGrid = $(element).closest("div[type=ajaxgrid]");
-  return ajaxGrid.size() > 0 && ajaxGrid.first().attr("instanceid");
-}
-
-// Runs a function asynchronously to fix problems in certain cases
 function runAsync(func) {
   window.setTimeout(func, 0);
 }
 
-// Evaluates code in the page context
-function runEval(source) {
-  const value = typeof source === "function" ? `(${source})();` : source;
-  const script = document.createElement("script");
-  script.setAttribute("type", "application/javascript");
-  script.textContent = value;
-  document.body.appendChild(script);
-  document.body.removeChild(script);
+const FORBIDDEN_PATH_KEYS = new Set(["__proto__", "constructor", "prototype"]);
+
+function isSafePath(path) {
+  return (
+    Array.isArray(path) &&
+    path.length > 0 &&
+    path.every(key => {
+      if (typeof key !== "string" && typeof key !== "number") {
+        return false;
+      }
+      return !FORBIDDEN_PATH_KEYS.has(String(key));
+    })
+  );
 }
 
-// Reads the value at the provided path in a deeply nested object
+function hasOwn(parent, key) {
+  return Object.prototype.hasOwnProperty.call(parent, key);
+}
+
+// Own-property traversal is deliberate: inherited names are not stored data, and
+// consulting them would make a polluted prototype observable through this helper.
 function deepGetProp(o, s) {
+  if (!isSafePath(s)) {
+    return;
+  }
   let c = o;
-  while (s.length) {
-    const n = s.shift();
-    if (!(c instanceof Object && n in c)) {
+  for (const n of s) {
+    if (!(c !== null && typeof c === "object" && hasOwn(c, n))) {
       return;
     }
     c = c[n];
@@ -95,32 +101,88 @@ function deepGetProp(o, s) {
   return c;
 }
 
-// Sets a value at the provided path in a deeply nested object
+// Validates the whole path before mutating anything, so a forbidden segment cannot
+// leave a partially-created prefix behind. False on every unsafe path.
 function deepSetProp(o, s, v) {
+  if (!isSafePath(s)) {
+    return false;
+  }
+
   let c = o;
-  while (s.length) {
-    const n = s.shift();
-    if (s.length === 0) {
+  for (let i = 0; i < s.length; i++) {
+    const n = s[i];
+    if (!(c !== null && typeof c === "object")) {
+      return false;
+    }
+    if (i === s.length - 1) {
       if (v === null) {
         delete c[n];
       } else {
         c[n] = v;
       }
-      return;
+      return true;
     }
-    if (!(typeof c === "object" && n in c)) {
-      c[n] = new Object();
+    if (!hasOwn(c, n)) {
+      c[n] = {};
+    } else if (c[n] === null || typeof c[n] !== "object") {
+      return false;
     }
     c = c[n];
   }
+  return false;
 }
 
-// Injects a style tag into the page
+// Clones one of the page's own buttons so ours inherits the real styling and the
+// Angular scoping hash. Strips transient state, not styling:
+//   - id, which would end up duplicated
+//   - type=submit, which would submit the original's form
+//   - disabled: Angular disables buttons while a form is pristine or a request is in
+//     flight, and a clone taken at that moment stays dead forever
+//   - the `loading` class: `.flat.loading::before` swaps the caption for a spinner
+//
+// The last two shipped as bugs - an unclickable button, then a permanent spinner -
+// so they are stripped here once, not at each call site.
+function cloneButton(source) {
+  // Deep, and this matters: the caption lives in a `.neptun-button__label` span, and
+  // the host's own `color` equals its background. Clone shallowly, write text onto
+  // the host, and you get an invisible caption. Always relabel via setButtonLabel().
+  const clone = source.cloneNode(true);
+  clone.removeAttribute("id");
+  clone.removeAttribute("disabled");
+  clone.disabled = false;
+  clone.type = "button";
+  if (clone.classList) {
+    clone.classList.remove("loading");
+    clone.classList.remove("disabled");
+  }
+  return clone;
+}
+
+// Writing to the host instead would destroy the component's inner markup and leave
+// the text in the host's own colour - the background colour. See cloneButton.
+function setButtonLabel(button, text) {
+  const label = button.querySelector && button.querySelector(".neptun-button__label");
+  if (label) {
+    label.textContent = text;
+    return;
+  }
+  button.textContent = text;
+}
+
 function injectCss(css) {
-  $("<style></style>").html(css).appendTo("head");
+  const style = document.createElement("style");
+  style.textContent = css;
+  // Userscripts run at document-start so Angular's first request can be intercepted;
+  // at that point <html> exists but <head> is not guaranteed to. Styling must not
+  // make early module initialization throw and prevent every later module loading.
+  const host = document.head || document.documentElement;
+  if (host) {
+    host.appendChild(style);
+  }
+  return style;
 }
 
-// Parses a subject code that is in parentheses at the end of a string
+// Parses a subject code in parentheses at the end of a string.
 function parseSubjectCode(source) {
   const str = source.trim();
   if (str.charAt(str.length - 1) === ")") {
@@ -137,7 +199,6 @@ function parseSubjectCode(source) {
   return null;
 }
 
-// Returns if the given string stands for a passing grade
 function isPassingGrade(str) {
   return [
     "jeles",
@@ -157,7 +218,6 @@ function isPassingGrade(str) {
   });
 }
 
-// Returns if the given string stands for a failing grade
 function isFailingGrade(str) {
   return [
     "elégtelen",
@@ -174,22 +234,18 @@ function isFailingGrade(str) {
 }
 
 module.exports = {
-  isNeptunPage,
-  isLoginPage,
-  isLoggedIn,
   getNeptunCode,
-  getDomain,
-  getTraining,
-  getPageId,
-  isPageId,
-  getAjaxInstance,
-  getAjaxInstanceId,
-  runAsync,
-  runEval,
+  onNeptunCodeChange,
+  setNeptunCode,
+  findProp,
   deepGetProp,
   deepSetProp,
   injectCss,
+  cloneButton,
+  setButtonLabel,
+  runAsync,
   parseSubjectCode,
   isPassingGrade,
   isFailingGrade,
+  getDomain,
 };

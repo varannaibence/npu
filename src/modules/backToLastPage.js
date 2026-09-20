@@ -1,62 +1,96 @@
-const $ = window.jQuery;
-const utils = require("../utils");
+// Remembers the last route visited and offers to return to it once login completes.
+//
+// The dashboard and the login page are skipped: "go back to where you were" is
+// meaningless for the page you would land on anyway.
+const interceptor = require("../interceptor");
+const router = require("../router");
 const storage = require("../storage");
+const modal = require("../modal");
+const tokens = require("../neptunTokens");
 
-// Add a checkbox under the login button for enabling auto-redirect to the last visited page
-function initLastPageCheckbox() {
-  utils.injectCss(`
-    .login_right_side {
-      vertical-align: top;
-    }
-  `);
-  $(".login_button_td").append(`
-    <div id="backToLastPage" style="text-align: center; margin: 23px 0 0 128px">
-      <input type="checkbox" id="backToLastPage_chbx" style="vertical-align: middle">
-      <label for="backToLastPage_chbx">vissza a legutóbbi oldalra</label>
-    </div>
-  `);
-  $("#backToLastPage_chbx").change(function () {
-    saveLastPageSetting();
+const LOGIN_ROUTE = "/hallgato_ng/login";
+const SKIP_ROUTES = [LOGIN_ROUTE, "/hallgato_ng/dashboard"];
+const STORAGE_KEY = "lastPage";
+
+// Shown in the settings panel; `id` is also the key the switch is stored under.
+const meta = {
+  id: "backToLastPage",
+  name: "Vissza a legutóbbi oldalra",
+  description: "Bejelentkezés után felajánlja, hogy visszavigyen oda, ahol jártál.",
+};
+
+function shouldActivate() {
+  return true;
+}
+
+// Pure, so it is checkable without a router.
+function isRememberable(path) {
+  return typeof path === "string" && path.length > 0 && !SKIP_ROUTES.includes(path);
+}
+
+// Drawn as a real Neptun dialog rather than a native confirm(), which reads as "a
+// script is doing something to my Neptun". Declining is the easy path - Escape, the
+// X, the backdrop or "Maradok".
+function offerReturn(lastPage) {
+  modal.open({
+    title: "Vissza a legutóbbi oldalra?",
+    build(content) {
+      const intro = document.createElement("p");
+      intro.style.margin = "0 0 8px";
+      intro.textContent = "Kilépés előtt ezen az oldalon jártál:";
+      const path = document.createElement("p");
+      path.style.cssText = `margin:0;font-weight:700;color:${tokens.primary};word-break:break-all`;
+      path.textContent = lastPage;
+      content.appendChild(intro);
+      content.appendChild(path);
+    },
+    actions: [
+      { label: "Maradok" },
+      {
+        label: "Vigyél oda",
+        primary: true,
+        onClick() {
+          location.assign(lastPage);
+        },
+      },
+    ],
   });
 }
 
-// Save the saved state of the last page setting
-function saveLastPageSetting() {
-  storage.set("backToLastPage", utils.getDomain(), document.getElementById("backToLastPage_chbx").checked);
-  storage.set("newLogin", utils.getDomain(), document.getElementById("backToLastPage_chbx").checked);
-}
-
-// Load the saved state of the last page setting
-function loadLastPageSetting() {
-  if (storage.get("backToLastPage", utils.getDomain())) {
-    storage.set("newLogin", utils.getDomain(), true);
-    $("#backToLastPage_chbx").get(0).checked = true;
-  }
-}
-
-function lastPageInit() {
-  if (utils.isLoginPage()) {
-    initLastPageCheckbox();
-    loadLastPageSetting();
-  } else {
-    if (
-      window.location.href.endsWith("main.aspx") &&
-      storage.get("newLogin", utils.getDomain()) &&
-      storage.get("lastPage", utils.getDomain())
-    ) {
-      storage.set("newLogin", utils.getDomain(), false);
-      if (!storage.getForUser("lastPage").includes("ctrl=inbox")) {
-        window.location.href = storage.getForUser("lastPage");
-      }
-    } else if (window.location.href.includes("main.aspx")) {
-      storage.setForUser("lastPage", window.location.href);
+// Plain storage.set/get, not the per-user variants: this can run before the Neptun
+// code has been captured at all, and "what page was open" is not per-user data.
+function initialize() {
+  function remember(path) {
+    if (isRememberable(path)) {
+      storage.set(STORAGE_KEY, path);
     }
   }
+
+  router.onChange(remember);
+  // router.install() runs before any module subscribes, so the route the user landed
+  // on never fires a change. Without this, a session that dies without a single
+  // in-app navigation has nothing to offer afterwards.
+  remember(router.getPath());
+
+  // Authenticate answers twice: the first (202) is only the password check ahead of
+  // 2FA. Only the second (200, isTwoFactorRequired:false) completes a login.
+  interceptor.onResponse("Account/Authenticate", json => {
+    const data = json && json.data;
+    if (!data || data.isTwoFactorRequired !== false) {
+      return;
+    }
+    const lastPage = storage.get(STORAGE_KEY);
+    storage.set(STORAGE_KEY, null);
+    if (lastPage) {
+      offerReturn(lastPage);
+    }
+  });
 }
 
 module.exports = {
-  shouldActivate: () => utils.isNeptunPage(),
-  initialize: () => {
-    lastPageInit();
-  },
+  meta,
+  shouldActivate,
+  initialize,
+  isRememberable,
+  offerReturn,
 };
