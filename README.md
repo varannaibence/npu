@@ -19,7 +19,7 @@ nem működik.
 | Tulajdonság | Érték |
 | --- | --- |
 | **Célfelület** | Új, Angular-alapú Neptun NG |
-| **Telepítés** | Tampermonkey és helyi fejlesztői loader |
+| **Telepítés** | [Tampermonkeyból, egy kattintással](https://github.com/varannaibence/npu/releases/latest/download/npu.user.js) |
 | **Állapot** | Korai fejlesztési fázis |
 | **Kompatibilitás** | [Ellenőrzött intézmények és állapotok](docs/TESTED.md) |
 | **Licenc** | [MIT](LICENSE) |
@@ -64,23 +64,25 @@ időpontban sorban megpróbál beküldeni. Részletesen lentebb.
 
 ## Telepítés
 
+### Normál felhasználóknak
+
 1. Telepítsd a [Tampermonkeyt](https://www.tampermonkey.net/) a böngésződbe:
    [Firefox](https://addons.mozilla.org/firefox/addon/tampermonkey/),
    [Chrome](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo),
    [Edge](https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepeloendndfphd),
    [Opera](https://addons.opera.com/en/extensions/details/tampermonkey-beta/)
    vagy [Safari](https://apps.apple.com/app/tampermonkey/id1482490089).
-2. A fejlesztői változat kipróbálásához kövesd a [helyi fejlesztői
-   loader](docs/DEVELOPMENT.md#helyi-fejlesztői-loader) útmutatóját.
+2. Kattints a [Neptun PowerUp! telepítésére](https://github.com/varannaibence/npu/releases/latest/download/npu.user.js).
+3. A Tampermonkey ablakában válaszd az **Install** vagy **Telepítés** gombot.
+4. Nyisd meg a Neptunt, és jelentkezz be a szokásos módon.
 
-3. Nyisd meg a Neptunt, és jelentkezz be a szokásos módon.
+Ha a böngésző csak letölti a fájlt, nyisd meg újra a letöltött `npu.user.js`
+fájlt, és engedélyezd a Tampermonkey telepítését.
 
-Helyi loader használatakor Chrome, Edge és Opera alatt a böngésző kérheti a
-fejlesztői mód bekapcsolását a bővítmények oldalán (`chrome://extensions`,
-`edge://extensions` vagy `opera://extensions`).
+### Fejlesztőknek
 
-Fejleszteni szeretnél inkább? A helyi loader a [fejlesztői
-útmutatóban](docs/DEVELOPMENT.md#helyi-fejlesztői-loader) van.
+Fejlesztéshez ne a release assetet telepítsd. A helyi loader, a build, a tesztek
+és a release-folyamat a [fejlesztői útmutatóban](docs/DEVELOPMENT.md) található.
 
 ## A Rajtoló használata
 
@@ -159,8 +161,3 @@ Szeretnél funkciót hozzáadni? Modulként, pull requestben lehet — a
 A program az [MIT License](LICENSE) feltételei szerint használható, saját
 felelősségedre. A korábbi kiadások története a [docs/CHANGELOG.md](docs/CHANGELOG.md)
 fájlban maradt meg.
-
-## Fejlesztőknek
-
-A helyi fejlesztés, a build, a tesztek, az API-mérések és a release-folyamat a
-[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) útmutatóban található.
