@@ -19,7 +19,7 @@ nem működik.
 | Tulajdonság | Érték |
 | --- | --- |
 | **Célfelület** | Új, Angular-alapú Neptun NG |
-| **Telepítés** | [Tampermonkeyból, egy kattintással](https://github.com/varannaibence/npu/releases/latest/download/npu.user.js) |
+| **Telepítés** | [Telepítési útmutató](#telepítés) |
 | **Állapot** | Korai fejlesztési fázis |
 | **Kompatibilitás** | [Ellenőrzött intézmények és állapotok](docs/TESTED.md) |
 | **Licenc** | [MIT](LICENSE) |
@@ -64,18 +64,63 @@ megosztani.
 
 ### Normál felhasználóknak
 
-1. Telepítsd a [Tampermonkeyt](https://www.tampermonkey.net/) a böngésződbe:
-   [Firefox](https://addons.mozilla.org/firefox/addon/tampermonkey/),
-   [Chrome](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo),
-   [Edge](https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepeloendndfphd),
-   [Opera](https://addons.opera.com/en/extensions/details/tampermonkey-beta/)
-   vagy [Safari](https://apps.apple.com/app/tampermonkey/id1482490089).
-2. Kattints a [Neptun PowerUp! telepítésére](https://github.com/varannaibence/npu/releases/latest/download/npu.user.js).
-3. A Tampermonkey ablakában válaszd az **Install** vagy **Telepítés** gombot.
-4. Nyisd meg a Neptunt, és jelentkezz be a szokásos módon.
+Az NPU egy böngészőben futó userscript. Először a Tampermonkey bővítmény kell
+hozzá, utána magát az NPU-t kell telepíteni. Az egész néhány perc.
 
-Ha a böngésző csak letölti a fájlt, nyisd meg újra a letöltött `npu.user.js`
-fájlt, és engedélyezd a Tampermonkey telepítését.
+#### 1. Telepítsd a Tampermonkeyt
+
+Válaszd ki a böngésződet:
+
+- [Chrome](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)
+- [Firefox](https://addons.mozilla.org/firefox/addon/tampermonkey/)
+- [Microsoft Edge](https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepeloendndfphd)
+- [Opera](https://addons.opera.com/en/extensions/details/tampermonkey-beta/)
+- [Safari](https://apps.apple.com/app/tampermonkey/id1482490089)
+
+#### 2. Chrome vagy Edge alatt engedélyezd a userscripteket
+
+Ezt a böngészők újabb verziói külön kérhetik. Ha ez kimarad, az NPU látszódhat
+a Tampermonkey menüjében, de a Neptun oldalán semmi nem fog történni.
+
+**Chrome:**
+
+1. Nyisd meg a `chrome://extensions` oldalt.
+2. Keresd meg a Tampermonkeyt, majd kattints a **Részletek** gombra.
+3. Kapcsold be a **Felhasználói szkriptek engedélyezése** vagy
+   **Allow User Scripts** lehetőséget.
+4. Ellenőrizd, hogy a Tampermonkey hozzáférhet a Neptun webhelyéhez.
+
+**Edge:** ugyanez az `edge://extensions` oldalon. Ha nem látsz userscript
+engedélyt, nincs vele külön teendőd.
+
+Firefox és Safari alatt ezt a külön lépést általában átugorhatod.
+
+#### 3. Telepítsd az NPU-t
+
+Kattints a [Neptun PowerUp! telepítésére](https://github.com/varannaibence/npu-uj-neptunhoz/releases/latest/download/npu.user.js),
+majd a megnyíló Tampermonkey ablakban válaszd a **Telepítés** vagy **Install**
+gombot.
+
+Ha a böngésző csak letölti a `npu.user.js` fájlt, nyisd meg a letöltött fájlt,
+és engedélyezd, hogy a Tampermonkey telepítse.
+
+#### 4. Nyisd meg a Neptunt
+
+Az NPU 3 csak az új Neptun-felületen működik. Ennek címében szerepel a
+`/hallgato_ng/` rész. Nyisd meg ezt az oldalt, majd töltsd újra egyszer.
+
+#### 5. Ellenőrizd, hogy tényleg fut-e
+
+Nyomj a Tampermonkey ikonjára a Neptun oldalán. Akkor jó a telepítés, ha:
+
+- a Tampermonkey ikonján megjelenik az `1`-es jelzés;
+- a menüben látszik a **Neptun PowerUp! beállítások** pont;
+- a bejelentkező oldalon vagy a lap alján megjelenik a
+  **Neptun PowerUp! v3.x.x** felirat.
+
+Az, hogy a script neve mellett megjelenik a **Szerkesztés**, **Hibabejelentés**
+és **Törlés** lehetőség, csak azt jelenti, hogy telepítve van. Ettől még nem
+biztos, hogy az adott oldalon fut is.
 
 ### Fejlesztőknek
 
@@ -220,10 +265,22 @@ hibabejelentésnek soha ne küldd el.
 
 ## Ha valami nem működik
 
-Ellenőrizd, hogy a szkript engedélyezve van-e, és tényleg az új Neptun megfelelő
-oldalán jársz-e. Rajtolónál töltsd újra az oldalt bejelentkezett állapotban,
-majd állítsd össze újra a tervet. Ha egyáltalán semmi nem látszik, a
-[docs/TESTED.md](docs/TESTED.md) végén van egy rövid lista a gyakori okokról.
+**A script ott van a Tampermonkeyben, de az oldalon semmi nem változik:** nézd
+meg, van-e `1`-es jelzés a Tampermonkey ikonján. Ha nincs, a script telepítve
+van, de nem fut. Chrome és Edge alatt ellenőrizd a userscript-engedélyt és a
+Neptun webhelyéhez adott hozzáférést a fenti telepítési útmutató szerint.
+
+**Van `1`-es jelzés, de nincs NPU-felirat vagy beállítási menü:** töltsd újra
+az oldalt. Ha továbbra sem jelenik meg, valószínűleg indulási hiba történt.
+Nyiss hibajegyet, és csatold a böngésző fejlesztői konzoljában megjelenő első
+piros NPU-hibát.
+
+**Az NPU megjelenik, de valamelyik funkció hiányzik:** ez már lehet
+intézményenkénti eltérés. Nézd meg az [ellenőrzött intézmények
+listáját](docs/TESTED.md), majd írd meg, pontosan melyik funkció nem működik.
+
+**A Rajtoló nem indul:** töltsd újra az oldalt bejelentkezett állapotban, majd
+állítsd össze újra a tervet.
 
 Hibabejelentéshez írd le a program verzióját (a lap alján olvasható), az
 intézményt, az oldalt és azt, hogy mivel lehet előhozni. Képernyőkép jöhet, de
