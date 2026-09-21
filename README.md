@@ -33,46 +33,32 @@ nem működik.
 Az **alapból kikapcsolva** jelölésű funkciókat az **NPU beállítások** panelben
 kapcsolhatod be. A módosítások a következő oldalbetöltéskor lépnek életbe.
 
-**Tárgyfelvétel**
+A táblázatban a **Ki** alapállapot szándékos, nem hiányzó vagy félkész
+funkciót jelent. Ezek a funkciók a Neptun megszokott munkafolyamatát vagy
+elrendezését módosíthatják, illetve extra hálózati kéréseket indíthatnak. Ezért
+csak kifejezett bekapcsolás után lépnek életbe, így az NPU nem változtatja meg
+váratlanul a megszokott használatot.
 
-- **Tárgylista automatikus betöltése** *(alapból kikapcsolva)*: magától elindítja
-  a tárgyak listázását, ahelyett hogy minden alkalommal rá kellene nyomni a
-  keresésre. Így nem indítunk a felhasználó helyett automatikus keresést és extra
-  kérést.
-- Egy lapon sokkal több sort tölt be, így jóval kevesebbet kell lapozni.
-- A kurzusokra kiírja a férőhelyet (`11 / 999`), és színnel jelzi, hogy van-e még
-  benne hely, csak várólista van-e, vagy egyáltalán nem lehet rá jelentkezni.
-- A lenyitott kurzusoknál jelzi, ha az időpont ütközik a Neptun saját
-  órarendtervezőjében lévő vagy már felvett kurzussal, és azt is kiírja, hogy
-  pontosan mivel és mikor.
-- **Táblázatos kurzuslista** *(alapból kikapcsolva)*: a kinyitott tárgy kurzusait
-  áttekinthető, szűrhető és rendezhető táblázatban jeleníti meg. A natív listát
-  NPU-specifikus nézetre cseréli, ezért nem akarjuk automatikusan megtörni a
-  megszokott munkafolyamatot; kinek melyik megjelenítés kényelmes, szubjektív.
-- A **Betelt kurzusok hátra** gombbal a már lenyitott tárgyak kurzuslistájában
-  előre rendezi azokat, amikbe még lehet jelentkezni; újra megnyomva visszaáll az
-  eredeti sorrend. A lenyitott tárgy fejlécén a már betöltött kurzusok állapota is
-  látszik.
+| Terület | Funkció | Röviden | Alapállapot |
+| --- | --- | --- | --- |
+| Tárgyfelvétel | Gyorsabb kurzuslista | Egy oldalon több kurzust tölt be, így kevesebbet kell lapozni. | Be |
+| Tárgyfelvétel | Tárgylista automatikus betöltése | Magától elindítja a tárgyak listázását, külön keresés nélkül. | Ki |
+| Tárgyfelvétel | Férőhely és várólista | Jelzi a szabad helyet, a beteltséget és a várólistát. | Be |
+| Tárgyfelvétel | Órarendi ütközések | Megmutatja az ütköző tárgyat és időpontot a Neptun adatai alapján. | Be |
+| Tárgyfelvétel | Táblázatos kurzuslista | Szűrhető és rendezhető táblázatban jeleníti meg a kurzusokat. | Ki |
+| Tárgyfelvétel | Betelt kurzusok hátra | A még felvehető kurzusokat előre rendezi a lenyitott listában. | Gombbal |
+| Rajtoló | Sorba rendezett tárgyfelvétel | Mentett tárgy- és kurzussorrendben, a megadott időpontban próbálkozik. | Külön használható |
+| Beállítások | Kompakt tárgyfelvételi nézet | Sűrűbb elrendezés nagy asztali kijelzőkhöz. | Ki |
+| Fejléc | Kreditbontás | Tárgytípusonként bontja a ténylegesen felvett krediteket. | Be |
+| Munkamenet | Munkamenet életben tartása | Aktív használat mellett megújítja a közeli lejáratú munkamenetet. | Ki |
+| Navigáció | Visszatérés az előző oldalra | Bejelentkezés után felajánlja a legutóbb használt oldal megnyitását. | Be |
+| Állapot | NPU-verzió és hibabejelentés | A név és verzió látszik a bejelentkező oldalon és a láblécben. | Be |
 
-**Rajtoló** — saját sorrend tárgyakból és kurzusokból, amit egy megadott
-időpontban sorban megpróbál beküldeni. Részletesen lentebb.
+## Közösség
 
-**Máshol**
-
-- A funkciók külön ki- és bekapcsolhatók a lap alján, az **NPU beállítások**
-  pontban.
-- A nagy asztali kijelzőkre készült **Kompakt tárgyfelvételi nézet** *(alapból
-  kikapcsolva)* külön bekapcsolható; mobilon és a Neptun többi oldalán nem
-  változtat semmit. Ez NPU-specifikus elrendezés, ezért alapból nem írjuk át a
-  megszokott felületet; hogy kinek melyik nézet jön be, szubjektív.
-- A fejlécben tárgytípusonként bontja a ténylegesen felvett krediteket.
-- **Munkamenet életben tartása** *(alapból kikapcsolva, mert háttérforgalmat
-  indít)*: aktív használat mellett megújítja a közeli lejáratú munkamenetet;
-  tétlen lapot nem tart életben.
-- Bejelentkezés után felajánlja, hogy visszavigyen arra az oldalra, ahol
-  legutóbb jártál.
-- A bejelentkező oldalon és a láblécben jelzi, hogy fut, a lábléc pedig egyből a
-  hibabejelentőre visz. Így hibabejelentésnél látszik, hogy az NPU fut.
+Kérdéseket, ötleteket és intézményi tapasztalatokat a [GitHub Discussions
+oldalon](https://github.com/varannaibence/npu-uj-neptunhoz/discussions) lehet
+megosztani.
 
 ## Telepítés
 
