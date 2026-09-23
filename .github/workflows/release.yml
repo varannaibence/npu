@@ -18,13 +18,15 @@ jobs:
           node-version: 20
       - name: Install packages
         run: npm ci
-      - name: Validate release tag
+      # The tag is the version. Creating a release in the GitHub UI is enough; the
+      # built script's @version comes from here, and package.json follows below.
+      - name: Set version from tag
         run: |
-          expected_tag="v$(node -p "require('./package.json').version")"
-          if [ "${GITHUB_REF_NAME}" != "${expected_tag}" ]; then
-            echo "Release tag mismatch: expected ${expected_tag} from package.json, got ${GITHUB_REF_NAME}." >&2
+          if ! [[ "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tag must look like v1.2.3, got ${GITHUB_REF_NAME}." >&2
             exit 1
           fi
+          npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version --allow-same-version
       - name: Build and verify
         run: npm run build && npm run verify
       - name: Create or update release and upload script
@@ -37,18 +39,30 @@ jobs:
           else
             gh release create "${GITHUB_REF_NAME}" "dist/npu.user.js" --repo "${GITHUB_REPOSITORY}" --title "${GITHUB_REF_NAME}" --verify-tag --generate-notes --draft=false
           fi
-      - name: Sync latest releases into README
+      # On the default branch's tip, not the tag: master may have moved on since
+      # the tag, and a push from the tag's commit would then be rejected.
+      - name: Sync version and latest releases into the default branch
         env:
           GH_TOKEN: ${{ github.token }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
+          # Drop the earlier tag-based version bump; it is redone below on the tip.
+          git checkout -- package.json package-lock.json
+          git fetch origin "${DEFAULT_BRANCH}"
+          git checkout -B "${DEFAULT_BRANCH}" "origin/${DEFAULT_BRANCH}"
+          current="$(node -p "require('./package.json').version")"
+          # Never move package.json backwards when an older version is re-released.
+          if [ "$(printf '%s\n%s\n' "${current}" "${GITHUB_REF_NAME#v}" | sort -V | tail -n1)" = "${GITHUB_REF_NAME#v}" ]; then
+            npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version --allow-same-version
+          fi
           gh api --paginate --slurp "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
             | jq 'add | map(select(.draft == false and .prerelease == false)) | .[0:3]' \
             | node tools/sync-releases.js
-          if git diff --quiet -- README.md; then
+          if git diff --quiet -- README.md package.json package-lock.json; then
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add README.md
-          git commit -m "docs: sync latest releases"
-          git push origin "HEAD:${{ github.event.repository.default_branch }}"
+          git add README.md package.json package-lock.json
+          git commit -m "chore: sync ${GITHUB_REF_NAME} version and latest releases"
+          git push origin "HEAD:${DEFAULT_BRANCH}"
