@@ -134,6 +134,14 @@ A legutóbbi három stabil kiadás. A **Telepítés** link Tampermonkey mellett
 közvetlenül telepíthető.
 
 <details open>
+<summary><strong>v3.0.1</strong> · 2026. szept. 23.</summary>
+
+Nincs külön kiadási megjegyzés.
+
+[Release megnyitása](https://github.com/varannaibence/npu-uj-neptunhoz/releases/tag/v3.0.1) · [Telepítés](https://github.com/varannaibence/npu-uj-neptunhoz/releases/download/v3.0.1/npu.user.js)
+
+</details>
+<details>
 <summary><strong>v3.0.0</strong> · 2026. szept. 20.</summary>
 
 Az első v3-fejlesztési kiadás az új, Angular-alapú Neptun-felülethez. A v3 külön
@@ -152,6 +160,9 @@ kódra épül; a régi WebForms-modulok nem részei ennek a verziónak.
   automatikusan megtörni.
 - A Rajtoló és a kurzussori jelzések ugyanazt az órarendi ütközésvizsgálatot
   használják.
+- Ha egy kurzusnak nincs órarendi adata, de a megjegyzésben szerepel az időpont
+  (pl. „Hétfő 14-15, A1/216”), az NPU onnan olvassa ki, kiírja a kurzus alá,
+  és az ütközésvizsgálat is számol vele.
 - A modulkapcsolók már alapból kikapcsolt, külön bekapcsolható modulokat is
   kompatibilisen tudnak tárolni.
 
@@ -183,6 +194,13 @@ kódra épül; a régi WebForms-modulok nem részei ennek a verziónak.
 - Bejelentkezés után felajánlja a visszatérést a legutóbbi oldalra.
 - Az NPU neve és verziója a bejelentkező oldalon és a láblécben, a lábléc
   hibabejelentő linkjével együtt.
+- Színtéma: a Neptun kékje helyett választható kiemelőszín (8 minta vagy
+  egyéni), a fejléc és a lábléc ennek sötét árnyalatát kapja. A beállításokban
+  élőben látszik, a Mégse visszaállítja.
+- Átdolgozott beállításpanel: kapcsolók, csoportonként kártya, animált
+  lenyitás.
+- Az NPU ablakainak címe már nem tapad a felső szélhez, és a gombjaik a
+  kezdőlapon is mind a négy sarkukon kerekek.
 
 **Ami szándékosan kimaradt**
 
@@ -203,11 +221,11 @@ kódra épül; a régi WebForms-modulok nem részei ennek a verziónak.
 - A sikeres és a ténylegesen betelt tárgyfelvételi válasz éles ellenőrzése még
   hátra van; ezek csak nyitott tárgyfelvételi időszakban mérhetők.
 
-[Release megnyitása](https://github.com/varannaibence/npu/releases/tag/v3.0.0) · [Telepítés](https://github.com/varannaibence/npu/releases/download/v3.0.0/npu.user.js)
+[Release megnyitása](https://github.com/varannaibence/npu-uj-neptunhoz/releases/tag/v3.0.0) · [Telepítés](https://github.com/varannaibence/npu-uj-neptunhoz/releases/download/v3.0.0/npu.user.js)
 
 </details>
 
-[Összes kiadás megtekintése](https://github.com/varannaibence/npu/releases)
+[Összes kiadás megtekintése](https://github.com/varannaibence/npu-uj-neptunhoz/releases)
 <!-- releases:end -->
 
 ## A Rajtoló használata
