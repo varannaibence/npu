@@ -6,7 +6,7 @@ const utils = require("../../utils");
 const timetable = require("../../timetable");
 const { PLANS_KEY, DEFAULT_DELAY_SECONDS, STATUS_KEY } = require("./constants");
 
-const { toMinutes, normaliseSlot, slotsOverlap, findPlanConflicts } = timetable;
+const { toMinutes, normaliseSlot, courseSlots, slotsOverlap, findPlanConflicts } = timetable;
 
 // Every field SubjectSignin needs, straight off the row. Accumulates into `into`, so
 // subjects seen across separate page loads or filters are not lost.
@@ -113,7 +113,7 @@ function collectCourses(json, into) {
       isSigned: typeof row.isSigned === "boolean" ? row.isSigned : null,
       isOnWaitingList: typeof row.isOnWaitingList === "boolean" ? row.isOnWaitingList : null,
       isRankingCourse: typeof row.isRankingCourse === "boolean" ? row.isRankingCourse : null,
-      slots: (row.classInstanceInfos || []).map(normaliseSlot).filter(Boolean),
+      slots: courseSlots(row),
     });
     map.set(row.subjectId, bySubject);
   });

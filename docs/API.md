@@ -143,19 +143,20 @@ rangsoros kurzusok éles jelentése és beküldési eredménye `[Ismeretlen]`.
 A fenti séma a használt mezőket sorolta. A teljes, élőben mért mezőlista ennél
 sokkal bővebb; az alábbiak eddig kihasználatlanok voltak:
 
-| Mező                                                                                 | Mit ad                                                                  | Állapot                        |
-| ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- | ------------------------------ |
-| `isSigned`                                                                           | **igaz pontosan azokra a kurzusokra, amelyeket a hallgató felvett**     | használjuk (ütközés-alapvonal) |
-| `isOnWaitingList`                                                                    | a hallgató várólistán van-e ezen a kurzuson                             | kihasználatlan                 |
-| `comparationTypeId`                                                                  | a kurzustípus GUID-ja (Labor és Elmélet külön érték)                    | használjuk (csoportkulcs)      |
-| `room`                                                                               | kurzusszintű terem, a `classInstanceInfos[].rooms` mellett              | használjuk                     |
-| `tutorName`, `language`, `title`, `note`, `description`                              | a Neptun sora részben mutatja                                           | kihasználatlan                 |
-| `waitingStudentsCount`, `minLimit`, `maxWaitingStrength`                             | várólista-hossz és alsó létszámhatár                                    | kihasználatlan                 |
-| `rankPoint1`, `rankPoint2`, `rankOrder`, `expectedRankOrder`, `expectedRankingPoint` | rangsoros kurzusok pontjai                                              | kihasználatlan                 |
-| `teachingMethod`, `teachingMethodId`, `isOnline`                                     | oktatási forma                                                          | kihasználatlan                 |
-| `signinRequirementText`, `isNotStarted`, `isEndorsementRequired`                     | jelentkezési feltételek                                                 | kihasználatlan                 |
-| `classInstanceTimeTableList`                                                         | második órarendi forrás a `classInstanceInfos` mellett                  | kihasználatlan                 |
-| `typeIdentifier`                                                                     | megjelenítési érték, **nem** használható kulcsként                      | —                              |
+| Mező                                                                                 | Mit ad                                                                | Állapot                        |
+| ------------------------------------------------------------------------------------ | --------------------------------------------------------------------- | ------------------------------ |
+| `isSigned`                                                                           | **igaz pontosan azokra a kurzusokra, amelyeket a hallgató felvett**   | használjuk (ütközés-alapvonal) |
+| `isOnWaitingList`                                                                    | a hallgató várólistán van-e ezen a kurzuson                           | kihasználatlan                 |
+| `comparationTypeId`                                                                  | a kurzustípus GUID-ja (Labor és Elmélet külön érték)                  | használjuk (csoportkulcs)      |
+| `room`                                                                               | kurzusszintű terem, a `classInstanceInfos[].rooms` mellett            | használjuk                     |
+| `note`                                                                               | „Megjegyzés”; üres órarendnél ebből olvassuk ki a napot, időt, termet | használjuk (órarend-tartalék)  |
+| `tutorName`, `language`, `title`, `description`                                      | a Neptun sora részben mutatja                                         | kihasználatlan                 |
+| `waitingStudentsCount`, `minLimit`, `maxWaitingStrength`                             | várólista-hossz és alsó létszámhatár                                  | kihasználatlan                 |
+| `rankPoint1`, `rankPoint2`, `rankOrder`, `expectedRankOrder`, `expectedRankingPoint` | rangsoros kurzusok pontjai                                            | kihasználatlan                 |
+| `teachingMethod`, `teachingMethodId`, `isOnline`                                     | oktatási forma                                                        | kihasználatlan                 |
+| `signinRequirementText`, `isNotStarted`, `isEndorsementRequired`                     | jelentkezési feltételek                                               | kihasználatlan                 |
+| `classInstanceTimeTableList`                                                         | második órarendi forrás a `classInstanceInfos` mellett                | kihasználatlan                 |
+| `typeIdentifier`                                                                     | megjelenítési érték, **nem** használható kulcsként                    | —                              |
 
 **Fontos mérési tény:** a `SchedulableSubjects[].scheduledCourseIds` a Neptun natív
 _tervezőjének_ listája, **nem** a felvett kurzusoké. A kód ezért nem következtet

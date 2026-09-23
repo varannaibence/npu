@@ -163,5 +163,10 @@ assert.deepStrictEqual(
   ["Room 201", "Csütörtök 08:00–10:00"],
   "a further session is absent from the row, so it is printed in full"
 );
+assert.deepStrictEqual(
+  conflictHints.scheduleLines({ slots: [Object.assign(session(1, 840, 900, "A1/216"), { fromNote: true })] }),
+  ["Hétfő 14:00–15:00 · A1/216"],
+  "a slot read from the note is not on the row, so it is printed in full"
+);
 assert.strictEqual(conflictHints.scheduleLines({ slots: [] }), null, "no timetable, no line");
 assert.strictEqual(conflictHints.scheduleLines(null), null, "a missing course must not throw");
