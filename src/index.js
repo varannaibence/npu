@@ -53,6 +53,8 @@ settingsPanel.setRegistry(modules);
 // A second way in, independent of the page's own footer.
 settingsPanel.registerMenuCommand();
 const enabledFlags = settings.readFlags();
+// Before first paint, so Neptun's blue never flashes.
+require("./theme").apply(settings.themeColor(enabledFlags));
 
 modules.forEach(module => {
   if (settings.isEnabled(module, enabledFlags) && module.shouldActivate()) {

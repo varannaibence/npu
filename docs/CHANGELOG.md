@@ -18,6 +18,9 @@ kódra épül; a régi WebForms-modulok nem részei ennek a verziónak.
   automatikusan megtörni.
 - A Rajtoló és a kurzussori jelzések ugyanazt az órarendi ütközésvizsgálatot
   használják.
+- Ha egy kurzusnak nincs órarendi adata, de a megjegyzésben szerepel az időpont
+  (pl. „Hétfő 14-15, A1/216”), az NPU onnan olvassa ki, kiírja a kurzus alá,
+  és az ütközésvizsgálat is számol vele.
 - A modulkapcsolók már alapból kikapcsolt, külön bekapcsolható modulokat is
   kompatibilisen tudnak tárolni.
 
@@ -49,6 +52,13 @@ kódra épül; a régi WebForms-modulok nem részei ennek a verziónak.
 - Bejelentkezés után felajánlja a visszatérést a legutóbbi oldalra.
 - Az NPU neve és verziója a bejelentkező oldalon és a láblécben, a lábléc
   hibabejelentő linkjével együtt.
+- Színtéma: a Neptun kékje helyett választható kiemelőszín (8 minta vagy
+  egyéni), a fejléc és a lábléc ennek sötét árnyalatát kapja. A beállításokban
+  élőben látszik, a Mégse visszaállítja.
+- Átdolgozott beállításpanel: kapcsolók, csoportonként kártya, animált
+  lenyitás.
+- Az NPU ablakainak címe már nem tapad a felső szélhez, és a gombjaik a
+  kezdőlapon is mind a négy sarkukon kerekek.
 
 **Ami szándékosan kimaradt**
 

@@ -6,8 +6,8 @@
 // though. For those managers a non-sensitive localStorage cache is the startup
 // source, while the GM store remains the durable source of truth.
 //
-// Only module ids and boolean values live in the cache. No account data, token or
-// Rajtoló plan ever belongs here. Most modules default on and therefore store only
+// Only module ids with boolean values, plus the chosen theme colour, live in the
+// cache. No account data, token or Rajtoló plan ever belongs here. Most modules default on and therefore store only
 // `false`; explicitly opt-in modules store `true`.
 //
 // Sub-option flags use a flat string key: "modulId.optionId", e.g.
@@ -16,6 +16,14 @@
 // since only the new flat keys are stored, and new options default to their
 // defaultEnabled value until explicitly toggled. No nested object lives in storage.
 const KEY = "npu.modules";
+// The one non-boolean entry: "#rrggbb", or absent for Neptun's own colours.
+const THEME_COLOR_KEY = "theme.color";
+const HEX_COLOR = /^#[0-9a-f]{6}$/;
+
+function themeColor(flags) {
+  const value = flags && flags[THEME_COLOR_KEY];
+  return typeof value === "string" && HEX_COLOR.test(value.toLowerCase()) ? value.toLowerCase() : null;
+}
 const CACHE_KEY = "npu.modules.cache.v1";
 
 function hasSyncStore() {
@@ -203,6 +211,9 @@ function pruneFlags(flags, modules) {
   });
 
   const next = {};
+  if (themeColor(flags)) {
+    next[THEME_COLOR_KEY] = themeColor(flags);
+  }
   Object.keys(flags || {}).forEach(id => {
     if (known.has(id) && typeof flags[id] === "boolean" && flags[id] !== known.get(id)) {
       next[id] = flags[id];
@@ -244,4 +255,6 @@ module.exports = {
   isEnabled,
   isOptionEnabled,
   pruneFlags,
+  THEME_COLOR_KEY,
+  themeColor,
 };
