@@ -1,131 +1,124 @@
+<div align="center">
+
+<img src="docs/assets/npu-icon.svg" width="96" height="96" alt="">
+
 # Neptun PowerUp!
 
+**Gyorsabb, átláthatóbb és kiszámíthatóbb Neptun — az új, Angular-alapú felülethez.**
+
 [![Verify code](https://github.com/varannaibence/npu/actions/workflows/verify.yml/badge.svg)](https://github.com/varannaibence/npu/actions/workflows/verify.yml)
+[![Latest release](https://img.shields.io/github/v/release/varannaibence/npu-uj-neptunhoz?label=kiad%C3%A1s)](https://github.com/varannaibence/npu-uj-neptunhoz/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Status: early phase](https://img.shields.io/badge/status-early%20phase-orange.svg)
+![Status: early phase](https://img.shields.io/badge/%C3%A1llapot-korai%20f%C3%A1zis-orange.svg)
 
-> _Az egyetem már így is elég nehéz. Ne a Neptun tegye nehezebbé._
+[**Telepítés**](#telepítés) · [Funkciók](#funkciók) · [Rajtoló](#a-rajtoló) · [Adatvédelem](#adatvédelem) · [Hibaelhárítás](#hibaelhárítás) · [Közösség](https://github.com/varannaibence/npu-uj-neptunhoz/discussions)
 
-A Neptun PowerUp! egy felhasználói szkript, ami a Neptun hallgatói felületét
-teszi gyorsabbá és kiszámíthatóbbá. Kevesebb kattintás, kevesebb lapozás,
-kevesebb ideges keresgélés: kiírja a kurzusok férőhelyét, és segít előre
-összeállítani a tárgyfelvételi sorrendedet.
+_Az egyetem már így is elég nehéz. Ne a Neptun tegye nehezebbé._
 
-A 3.0.0 az **új, Angular-alapú Neptun-felülethez** készült, a nulláról. A régi
-felülethez való 2.4.1-es kiadás ettől független; azt az [eredeti
-projektben](https://github.com/solymosi/npu) találod, és új felületű Neptunon
-nem működik.
+</div>
 
-| Tulajdonság | Érték |
-| --- | --- |
-| **Célfelület** | Új, Angular-alapú Neptun NG |
-| **Telepítés** | [Telepítési útmutató](#telepítés) |
-| **Állapot** | Korai fejlesztési fázis |
-| **Kompatibilitás** | [Ellenőrzött intézmények és állapotok](docs/TESTED.md) |
-| **Licenc** | [MIT](LICENSE) |
+---
 
-> **Korai fejlesztési fázis.** A v3 működése és felülete még változhat, és egyes
-> részei törékenyek lehetnek. Az intézményenkénti ellenőrzési állapotot a
-> [docs/TESTED.md](docs/TESTED.md) tartalmazza.
+A **Neptun PowerUp!** (NPU) egy böngészőben futó userscript, amely a Neptun
+hallgatói felületét egészíti ki: kiírja a kurzusok férőhelyét és órarendi
+ütközéseit, sorba rendezett tárgyfelvételt tesz lehetővé, és a felületet a
+saját ízlésedre színezheted. Mindez helyben, a böngésződben fut — saját szerver,
+fiók vagy jelszómentés nélkül.
 
-## Mit tud?
+A 3.x sorozat az **új Neptun NG felülethez** készült, a nulláról újraírva. A
+régi felülethez tartozó 2.4.1-es kiadás az [eredeti
+projektben](https://github.com/solymosi/npu) érhető el; az új Neptunon nem
+működik.
 
-Az **alapból kikapcsolva** jelölésű funkciókat az **NPU beállítások** panelben
-kapcsolhatod be. A módosítások a következő oldalbetöltéskor lépnek életbe.
+> **Korai fejlesztési fázis.** A működés és a felület még változhat. Hogy melyik
+> intézményen mit ellenőriztünk, azt a [docs/TESTED.md](docs/TESTED.md) mutatja.
 
-A táblázatban a **Ki** alapállapot szándékos, nem hiányzó vagy félkész
-funkciót jelent. Ezek a funkciók a Neptun megszokott munkafolyamatát vagy
-elrendezését módosíthatják, illetve extra hálózati kéréseket indíthatnak. Ezért
-csak kifejezett bekapcsolás után lépnek életbe, így az NPU nem változtatja meg
-váratlanul a megszokott használatot.
+## Funkciók
 
-| Terület | Funkció | Röviden | Alapállapot |
-| --- | --- | --- | --- |
-| Tárgyfelvétel | Gyorsabb kurzuslista | Egy oldalon több kurzust tölt be, így kevesebbet kell lapozni. | Be |
-| Tárgyfelvétel | Tárgylista automatikus betöltése | Magától elindítja a tárgyak listázását, külön keresés nélkül. | Ki |
-| Tárgyfelvétel | Férőhely és várólista | Jelzi a szabad helyet, a beteltséget és a várólistát. | Be |
-| Tárgyfelvétel | Órarendi ütközések | Megmutatja az ütköző tárgyat és időpontot a Neptun adatai alapján. | Be |
-| Tárgyfelvétel | Táblázatos kurzuslista | Szűrhető és rendezhető táblázatban jeleníti meg a kurzusokat. | Ki |
-| Tárgyfelvétel | Betelt kurzusok hátra | A még felvehető kurzusokat előre rendezi a lenyitott listában. | Gombbal |
-| Rajtoló | Sorba rendezett tárgyfelvétel | Mentett tárgy- és kurzussorrendben, a megadott időpontban próbálkozik. | Külön használható |
-| Beállítások | Kompakt tárgyfelvételi nézet | Sűrűbb elrendezés nagy asztali kijelzőkhöz. | Ki |
-| Fejléc | Kreditbontás | Tárgytípusonként bontja a ténylegesen felvett krediteket. | Be |
-| Munkamenet | Munkamenet életben tartása | Aktív használat mellett megújítja a közeli lejáratú munkamenetet. | Ki |
-| Navigáció | Visszatérés az előző oldalra | Bejelentkezés után felajánlja a legutóbb használt oldal megnyitását. | Be |
-| Állapot | NPU-verzió és hibabejelentés | A név és verzió látszik a bejelentkező oldalon és a láblécben. | Be |
+Minden funkció egyenként kapcsolható a **Neptun PowerUp! beállítások**
+panelben; a módosítás a következő oldalbetöltéskor lép életbe.
 
-## Közösség
+A **Ki** alapállapot szándékos döntés, nem félkész funkciót jelez. Ezek a
+modulok a Neptun megszokott elrendezését vagy munkafolyamatát változtatják meg,
+illetve extra hálózati kérést indítanak, ezért csak kifejezett bekapcsolás után
+lépnek működésbe.
 
-Kérdéseket, ötleteket és intézményi tapasztalatokat a [GitHub Discussions
-oldalon](https://github.com/varannaibence/npu-uj-neptunhoz/discussions) lehet
-megosztani.
+### Tárgyfelvétel
+
+| Funkció | Leírás | Alapállapot |
+| --- | --- | :---: |
+| Férőhely és várólista | Kurzusonként jelzi a szabad helyet, a beteltséget és a várólistát; tárgyanként a betelt kurzusok számát. | Be |
+| Órarendi ütközések | Megnevezi az ütköző tárgyat és időpontot a tervezőben lévő és a már felvett kurzusok alapján. | Be |
+| ↳ Időpont a megjegyzésből | Ha a Neptun nem ad órarendi adatot, a kurzus megjegyzéséből olvassa ki a napot, az időt és a termet (pl. „Hétfő 14-15, A1/216”), és az ütközésvizsgálatban is felhasználja. | Be |
+| Gyorsabb kurzuslista | Egy oldalon lényegesen több sort tölt be, így kevesebbet kell lapozni. | Be |
+| Betelt kurzusok hátra | A még felvehető kurzusokat előre rendezi a lenyitott listában. | Gombbal |
+| Tárgylista automatikus betöltése | Külön keresés nélkül elindítja a tárgyak listázását. | Ki |
+| Táblázatos kurzuslista | Szűrhető, rendezhető táblázatra cseréli a natív kurzuslistát. | Ki |
+| Kompakt nézet | Sűrűbb elrendezés nagy asztali kijelzőkhöz. | Ki |
+
+### Rajtoló
+
+| Funkció | Leírás | Alapállapot |
+| --- | --- | :---: |
+| Sorba rendezett tárgyfelvétel | Mentett tárgy- és kurzussorrend, a megadott időpontban soros beküldéssel. [Részletek](#a-rajtoló) | Külön indítható |
+
+### Megjelenés és kényelem
+
+| Funkció | Leírás | Alapállapot |
+| --- | --- | :---: |
+| Színtéma | A Neptun kékje helyett választható kiemelőszín (8 minta vagy egyéni); a fejléc és a lábléc ennek sötét árnyalatát kapja. | Neptun kék |
+| Kreditbontás | A fejlécben tárgytípusonként bontja a ténylegesen felvett krediteket. | Be |
+| Visszatérés az előző oldalra | Bejelentkezés után felajánlja a legutóbb használt oldal megnyitását. | Be |
+| Munkamenet életben tartása | Aktív használat mellett megújítja a hamarosan lejáró munkamenetet; tétlen lapot nem tart életben. | Ki |
+| Verzió és hibabejelentés | Az NPU neve és verziója a bejelentkező oldalon és a láblécben, hibabejelentő linkkel. | Be |
 
 ## Telepítés
 
-### Normál felhasználóknak
+Az NPU a **Tampermonkey** böngészőbővítménnyel fut. A telepítés néhány perc.
 
-Az NPU egy böngészőben futó userscript. Először a Tampermonkey bővítmény kell
-hozzá, utána magát az NPU-t kell telepíteni. Az egész néhány perc.
+**1. Tampermonkey telepítése** —
+[Chrome](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) ·
+[Firefox](https://addons.mozilla.org/firefox/addon/tampermonkey/) ·
+[Edge](https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepeloendndfphd) ·
+[Opera](https://addons.opera.com/en/extensions/details/tampermonkey-beta/) ·
+[Safari](https://apps.apple.com/app/tampermonkey/id1482490089)
 
-#### 1. Telepítsd a Tampermonkeyt
+**2. Userscriptek engedélyezése (csak Chrome és Edge)** — az újabb verziók ezt
+külön kérhetik; enélkül az NPU látszik a Tampermonkey menüjében, de a Neptunon
+nem fut.
 
-Válaszd ki a böngésződet:
+<details>
+<summary>Lépések Chrome és Edge alatt</summary>
 
-- [Chrome](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)
-- [Firefox](https://addons.mozilla.org/firefox/addon/tampermonkey/)
-- [Microsoft Edge](https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepeloendndfphd)
-- [Opera](https://addons.opera.com/en/extensions/details/tampermonkey-beta/)
-- [Safari](https://apps.apple.com/app/tampermonkey/id1482490089)
-
-#### 2. Chrome vagy Edge alatt engedélyezd a userscripteket
-
-Ezt a böngészők újabb verziói külön kérhetik. Ha ez kimarad, az NPU látszódhat
-a Tampermonkey menüjében, de a Neptun oldalán semmi nem fog történni.
-
-**Chrome:**
-
-1. Nyisd meg a `chrome://extensions` oldalt.
-2. Keresd meg a Tampermonkeyt, majd kattints a **Részletek** gombra.
-3. Kapcsold be a **Felhasználói szkriptek engedélyezése** vagy
-   **Allow User Scripts** lehetőséget.
+1. Nyisd meg a `chrome://extensions` (Edge: `edge://extensions`) oldalt.
+2. A Tampermonkeynál kattints a **Részletek** gombra.
+3. Kapcsold be a **Felhasználói szkriptek engedélyezése** / **Allow User
+   Scripts** lehetőséget.
 4. Ellenőrizd, hogy a Tampermonkey hozzáférhet a Neptun webhelyéhez.
 
-**Edge:** ugyanez az `edge://extensions` oldalon. Ha nem látsz userscript
-engedélyt, nincs vele külön teendőd.
+Ha Edge alatt nem látsz ilyen kapcsolót, nincs vele teendőd. Firefox és Safari
+alatt ez a lépés kimarad.
 
-Firefox és Safari alatt ezt a külön lépést általában átugorhatod.
+</details>
 
-#### 3. Telepítsd az NPU-t
+**3. Az NPU telepítése** —
+[**Neptun PowerUp! telepítése**](https://github.com/varannaibence/npu-uj-neptunhoz/releases/latest/download/npu.user.js),
+majd a Tampermonkey ablakában **Telepítés** / **Install**. Ha a böngésző csak
+letölti az `npu.user.js` fájlt, nyisd meg, és engedd a Tampermonkeynak
+telepíteni.
 
-Kattints a [Neptun PowerUp! telepítésére](https://github.com/varannaibence/npu-uj-neptunhoz/releases/latest/download/npu.user.js),
-majd a megnyíló Tampermonkey ablakban válaszd a **Telepítés** vagy **Install**
-gombot.
+**4. Neptun megnyitása** — az NPU 3 csak az új felületen működik, amelynek
+címében szerepel a `/hallgato_ng/` rész. Nyisd meg, és töltsd újra egyszer.
 
-Ha a böngésző csak letölti a `npu.user.js` fájlt, nyisd meg a letöltött fájlt,
-és engedélyezd, hogy a Tampermonkey telepítse.
+**5. Ellenőrzés** — a telepítés akkor sikeres, ha a Neptun oldalán:
 
-#### 4. Nyisd meg a Neptunt
+- a Tampermonkey ikonján megjelenik az `1`-es jelzés,
+- a menüben látszik a **Neptun PowerUp! beállítások** pont,
+- a bejelentkező oldalon vagy a lap alján olvasható a **Neptun PowerUp!
+  v3.x.x** felirat.
 
-Az NPU 3 csak az új Neptun-felületen működik. Ennek címében szerepel a
-`/hallgato_ng/` rész. Nyisd meg ezt az oldalt, majd töltsd újra egyszer.
-
-#### 5. Ellenőrizd, hogy tényleg fut-e
-
-Nyomj a Tampermonkey ikonjára a Neptun oldalán. Akkor jó a telepítés, ha:
-
-- a Tampermonkey ikonján megjelenik az `1`-es jelzés;
-- a menüben látszik a **Neptun PowerUp! beállítások** pont;
-- a bejelentkező oldalon vagy a lap alján megjelenik a
-  **Neptun PowerUp! v3.x.x** felirat.
-
-Az, hogy a script neve mellett megjelenik a **Szerkesztés**, **Hibabejelentés**
-és **Törlés** lehetőség, csak azt jelenti, hogy telepítve van. Ettől még nem
-biztos, hogy az adott oldalon fut is.
-
-### Fejlesztőknek
-
-Fejlesztéshez ne a release assetet telepítsd. A helyi loader, a build, a tesztek
-és a release-folyamat a [fejlesztői útmutatóban](docs/DEVELOPMENT.md) található.
+> **Fejlesztőknek:** fejlesztéshez ne a release-t telepítsd: a helyi loader, a build, a tesztek és
+> a kiadási folyamat a [fejlesztői útmutatóban](docs/DEVELOPMENT.md) található.
 
 <!-- releases:start -->
 ## Legfrissebb kiadások
@@ -136,7 +129,28 @@ közvetlenül telepíthető.
 <details open>
 <summary><strong>v3.0.1</strong> · 2026. szept. 23.</summary>
 
-Nincs külön kiadási megjegyzés.
+**Megjelenés**
+
+- Színtéma: a Neptun kékje helyett választható kiemelőszín (8 előre beállított
+  árnyalat vagy tetszőleges egyéni szín). A fejléc és a lábléc ennek sötét
+  árnyalatát kapja. A beállításokban élőben látszik, a Mégse visszaállítja.
+- Átdolgozott beállításpanel: kapcsolók jelölőnégyzetek helyett, csoportonként
+  kártya, animált lenyitás.
+- Az NPU ablakainak címe már nem tapad a felső szélhez, és a gombjaik a
+  kezdőlapon is mind a négy sarkukon kerekek.
+
+**Tárgyfelvétel**
+
+- Időpont a megjegyzésből: ha egy kurzusnak nincs órarendi adata, de az oktató
+  a megjegyzésbe írta az időpontot (pl. „Hétfő 14-15, A1/216”), az NPU onnan
+  olvassa ki a napot, az időt és a termet. Kiírja a kurzus alá, és az
+  ütközésvizsgálat, valamint a Rajtoló is számol vele. Az órarendi ütközések
+  alopciójaként kikapcsolható.
+
+**Kiadás**
+
+- A kiadás verzióját a tag adja; a GitHub felületén létrehozott release elég,
+  a `package.json` utána automatikusan igazodik.
 
 [Release megnyitása](https://github.com/varannaibence/npu-uj-neptunhoz/releases/tag/v3.0.1) · [Telepítés](https://github.com/varannaibence/npu-uj-neptunhoz/releases/download/v3.0.1/npu.user.js)
 
@@ -160,9 +174,6 @@ kódra épül; a régi WebForms-modulok nem részei ennek a verziónak.
   automatikusan megtörni.
 - A Rajtoló és a kurzussori jelzések ugyanazt az órarendi ütközésvizsgálatot
   használják.
-- Ha egy kurzusnak nincs órarendi adata, de a megjegyzésben szerepel az időpont
-  (pl. „Hétfő 14-15, A1/216”), az NPU onnan olvassa ki, kiírja a kurzus alá,
-  és az ütközésvizsgálat is számol vele.
 - A modulkapcsolók már alapból kikapcsolt, külön bekapcsolható modulokat is
   kompatibilisen tudnak tárolni.
 
@@ -194,13 +205,6 @@ kódra épül; a régi WebForms-modulok nem részei ennek a verziónak.
 - Bejelentkezés után felajánlja a visszatérést a legutóbbi oldalra.
 - Az NPU neve és verziója a bejelentkező oldalon és a láblécben, a lábléc
   hibabejelentő linkjével együtt.
-- Színtéma: a Neptun kékje helyett választható kiemelőszín (8 minta vagy
-  egyéni), a fejléc és a lábléc ennek sötét árnyalatát kapja. A beállításokban
-  élőben látszik, a Mégse visszaállítja.
-- Átdolgozott beállításpanel: kapcsolók, csoportonként kártya, animált
-  lenyitás.
-- Az NPU ablakainak címe már nem tapad a felső szélhez, és a gombjaik a
-  kezdőlapon is mind a négy sarkukon kerekek.
 
 **Ami szándékosan kimaradt**
 
@@ -228,92 +232,117 @@ kódra épül; a régi WebForms-modulok nem részei ennek a verziónak.
 [Összes kiadás megtekintése](https://github.com/varannaibence/npu-uj-neptunhoz/releases)
 <!-- releases:end -->
 
-## A Rajtoló használata
+## A Rajtoló
+
+A Rajtoló előre összeállított tervvel, a tárgyfelvétel nyitásakor, a megadott
+sorrendben küldi be a jelentkezéseket.
 
 1. Jelentkezz be, és maradj bejelentkezve a tervezett kezdésig.
-2. Nyisd meg a **Tárgyfelvétel** oldalt, listázd a tárgyakat, majd a kívánt
-   kurzusoknál kapcsold be a **Rajtolóhoz** kapcsolót.
-3. Nyisd meg a Rajtolót a szűrő melletti gombbal. Itt tudod sorba rendezni a
-   tárgyakat és kurzusokat, kitölteni a nyitás időpontját a Neptun saját
-   tárgyfelvételi időszakaiból, és megnézheted az esetleges órarendütközéseket meg
-   a kredit-előrejelzést.
-4. Indítsd el, és figyeld az eredményeket.
+2. A **Tárgyfelvétel** oldalon listázd a tárgyakat, és a kívánt kurzusoknál
+   kapcsold be a **Rajtolóhoz** kapcsolót.
+3. Nyisd meg a Rajtolót a szűrő melletti gombbal: rendezd sorba a tárgyakat és
+   kurzusokat, válaszd ki a nyitás időpontját a Neptun saját tárgyfelvételi
+   időszakaiból, és nézd át az ütközéseket és a kredit-előrejelzést.
+4. Indítsd el, és kövesd az eredményeket.
 
-A terv a böngésződben marad meg, felhasználónként és félévenként. A Neptun saját
-**Tervezőhöz adás** kapcsolója ettől külön funkció; nem az adja a Rajtoló
-listáját.
+A terv felhasználónként és félévenként a böngésződben tárolódik. A Neptun
+**Tervezőhöz adás** kapcsolója ettől független funkció.
 
-Amit a Rajtoló **nem** csinál: nem jelentkezik be helyetted, nem kér kétlépcsős
-kódot (2FA), nem kerüli meg a CAPTCHA-t és nem hágja át az egyetem szabályait.
-A **Leállítás** a további kéréseket állítja le; ami már elment a szervernek, azt
-nem lehet visszavonni. A várólistára kerülés pedig nem ugyanaz, mint a sikeres
-tárgyfelvétel — a Rajtoló ezt a kettőt külön is írja ki, épp ezért.
+> **Fontos:** a Rajtoló **nem** jelentkezik be helyetted, nem kér kétlépcsős kódot, nem
+> kerüli meg a CAPTCHA-t és nem hágja át az egyetem szabályait. A
+> **Leállítás** csak a további kéréseket állítja meg — ami már elment, azt nem
+> lehet visszavonni. A várólistára kerülést a sikeres felvételtől külön jelzi,
+> ismeretlen szerverválasznál pedig megáll, és nem könyvel el sikert.
 
 ## Fontos korlátok
 
-- Az intézményenkénti ellenőrzési állapot a [docs/TESTED.md](docs/TESTED.md) lapon látható;
-  ami nincs benne, arról nincs mérésünk. Máshol a működés nem garantált.
-- A végső döntést mindig a Neptun szervere hozza meg. Éles tárgyfelvételi
-  időszakban még ellenőrizendő a sikeres beküldés válasza, a ténylegesen betelt
-  (nem várólistás) kurzus válasza, és a rangsoros kurzusok viselkedése.
-- A tényleg tétlenül hagyott fül munkamenete lejárhat: a program nem tartja
-  életben vak háttérforgalommal, mert az pont az a minta, amit el akarunk
-  kerülni.
-- Az ütközésjelzés csak azokat a tervezett vagy felvett kurzusokat tudja
-  figyelembe venni, amelyekhez a Neptun felismerhető kurzusazonosítót és
-  órarendi adatot ad. Hiányzó időpontnál ezt külön jelzi, és nem állítja, hogy
-  nincs ütközés.
+- **Intézményi lefedettség.** Az ellenőrzött állapot a
+  [docs/TESTED.md](docs/TESTED.md) lapon látható; ami nincs benne, arról nincs
+  mérésünk.
+- **A döntést a Neptun hozza.** Éles tárgyfelvételi időszakban még ellenőrizendő
+  a sikeres beküldés, a ténylegesen betelt (nem várólistás) kurzus és a
+  rangsoros kurzusok szerverválasza.
+- **Tétlen munkamenet.** A tényleg magára hagyott fül munkamenete lejárhat; az
+  NPU szándékosan nem tartja életben vak háttérforgalommal.
+- **Ütközésjelzés.** Csak azokkal a kurzusokkal számol, amelyekhez a Neptun
+  felismerhető azonosítót, és órarendi adatot vagy értelmezhető megjegyzést ad.
+  Hiányzó időpontnál ezt jelzi, és nem állítja, hogy nincs ütközés.
 - A régi, 2.4.1-es kiadás funkciólistája nem a v3 képességeit írja le.
 
 ## Adatvédelem
 
-A program a böngésződben fut, és nem küldi az adataidat saját szerverre. A
-Rajtoló tervei és a beállítások helyben maradnak. A v3 nem tárol jelszót.
+Az NPU a böngésződben fut, és semmilyen adatot nem küld saját szerverre. A
+Rajtoló tervei és a beállítások helyben maradnak, jelszót a v3 nem tárol.
 
-A régi `neptun.users` GM-kulcsot (a korábbi bejelentkezési mentést) a v3 nem
-olvassa, nem importálja és nem törli. A v3 saját `data.users` adataiban maradt
-bejelentkezési és hitelesítési mezőket induláskor kitisztítja, a terveket és az
-egyéb nem érzékeny adatokat meghagyja. A régi `neptun.courses` értékéből csak
-biztonságos kulcsú, nem érzékeny kurzusválasztás kerülhet a v3
-`courses._legacy` részébe; a régi
-GM-forrásokat a program nem törli.
+<details>
+<summary>Mi történik a régi (2.x) adatokkal?</summary>
 
-A jelszavadat mindig a Neptun saját oldalán írd be — a programnak és a
-hibabejelentésnek soha ne küldd el.
+- A régi `neptun.users` GM-kulcsot (a korábbi bejelentkezési mentést) a v3 nem
+  olvassa, nem importálja és nem törli.
+- A v3 saját `data.users` adataiban maradt bejelentkezési és hitelesítési
+  mezőket induláskor kitisztítja; a terveket és az egyéb nem érzékeny adatokat
+  meghagyja.
+- A régi `neptun.courses` értékéből csak biztonságos kulcsú, nem érzékeny
+  kurzusválasztás kerülhet a `courses._legacy` részbe. A régi GM-forrásokat a
+  program nem törli.
 
-## Ha valami nem működik
+</details>
 
-**A script ott van a Tampermonkeyben, de az oldalon semmi nem változik:** nézd
-meg, van-e `1`-es jelzés a Tampermonkey ikonján. Ha nincs, a script telepítve
-van, de nem fut. Chrome és Edge alatt ellenőrizd a userscript-engedélyt és a
-Neptun webhelyéhez adott hozzáférést a fenti telepítési útmutató szerint.
+A jelszavadat mindig a Neptun saját oldalán add meg — sem a programnak, sem egy
+hibabejelentésnek ne küldd el.
 
-**Van `1`-es jelzés, de nincs NPU-felirat vagy beállítási menü:** töltsd újra
-az oldalt. Ha továbbra sem jelenik meg, valószínűleg indulási hiba történt.
-Nyiss hibajegyet, és csatold a böngésző fejlesztői konzoljában megjelenő első
-piros NPU-hibát.
+## Hibaelhárítás
 
-**Az NPU megjelenik, de valamelyik funkció hiányzik:** ez már lehet
-intézményenkénti eltérés. Nézd meg az [ellenőrzött intézmények
+<details>
+<summary><strong>A script ott van a Tampermonkeyben, de az oldalon semmi nem változik</strong></summary>
+
+Nézd meg, van-e `1`-es jelzés a Tampermonkey ikonján. Ha nincs, a script
+telepítve van, de nem fut: Chrome és Edge alatt ellenőrizd a userscript-engedélyt
+és a Neptun webhelyéhez adott hozzáférést ([2. lépés](#telepítés)).
+
+</details>
+
+<details>
+<summary><strong>Van <code>1</code>-es jelzés, de nincs NPU-felirat vagy beállítási menü</strong></summary>
+
+Töltsd újra az oldalt. Ha továbbra sem jelenik meg, valószínűleg indulási hiba
+történt: nyiss hibajegyet, és csatold a böngésző fejlesztői konzoljában
+megjelenő első piros NPU-hibát.
+
+</details>
+
+<details>
+<summary><strong>Az NPU fut, de valamelyik funkció hiányzik</strong></summary>
+
+Ez lehet intézményi eltérés. Nézd meg az [ellenőrzött intézmények
 listáját](docs/TESTED.md), majd írd meg, pontosan melyik funkció nem működik.
 
-**A Rajtoló nem indul:** töltsd újra az oldalt bejelentkezett állapotban, majd
-állítsd össze újra a tervet.
+</details>
 
-Hibabejelentéshez írd le a program verzióját (a lap alján olvasható), az
-intézményt, az oldalt és azt, hogy mivel lehet előhozni. Képernyőkép jöhet, de
-jelszót, sütit, belépési tokent vagy teljes hálózati exportot ne csatolj. A
-hibákat a [GitHub issue
-trackerben](https://github.com/varannaibence/npu/issues) lehet jelezni.
+<details>
+<summary><strong>A Rajtoló nem indul</strong></summary>
 
-## Közreműködők és licenc
+Töltsd újra az oldalt bejelentkezett állapotban, majd állítsd össze újra a
+tervet.
 
-A projekt eredeti szerzője Mate Solymosi; az új Neptun-felülethez készülő v3-at
+</details>
+
+**Hibabejelentés** a [GitHub issue trackerben](https://github.com/varannaibence/npu/issues):
+add meg a verziót (a lap alján olvasható), az intézményt, az oldalt és a
+reprodukálás lépéseit. Képernyőkép jöhet, de jelszót, sütit, belépési tokent vagy
+teljes hálózati exportot ne csatolj.
+
+## Közösség és közreműködés
+
+- **Kérdés, ötlet, intézményi tapasztalat:** [GitHub
+  Discussions](https://github.com/varannaibence/npu-uj-neptunhoz/discussions)
+- **Új funkció:** modulként, pull requestben — lásd
+  [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
+- **Változásnapló:** [docs/CHANGELOG.md](docs/CHANGELOG.md)
+
+## Szerzők és licenc
+
+Az NPU eredeti szerzője Mate Solymosi; az új Neptun-felülethez készült v3-at
 Varannai Bence írja.
 
-Szeretnél funkciót hozzáadni? Modulként, pull requestben lehet — a
-[docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) leírja, hogyan.
-
-A program az [MIT License](LICENSE) feltételei szerint használható, saját
-felelősségedre. A korábbi kiadások története a [docs/CHANGELOG.md](docs/CHANGELOG.md)
-fájlban maradt meg.
+[MIT License](LICENSE) — a program saját felelősségre használható.

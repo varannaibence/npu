@@ -6,6 +6,7 @@
 // so a fourth child would break the row. Ours shares the logo's
 // cell: the logo moves into a flex row inserted as the FIRST child.
 const settingsPanel = require("../settingsPanel");
+const npuLogo = require("../logo");
 
 const CONTENT_SELECTOR = ".footer__content";
 const LOGO_SELECTOR = ".footer__logo";
@@ -38,10 +39,14 @@ function buildBrand(doc, version) {
   link.href = PROJECT_URL;
   link.target = "_blank";
   link.rel = "noopener noreferrer";
-  link.textContent = brandText(version);
-  // The footer's own type scale; opacity rather than a second colour keeps this
-  // quieter than Neptun's links without inventing one.
-  link.style.cssText = "color:inherit;font-size:13px;text-decoration:none;opacity:.75;white-space:nowrap";
+  const text = doc.createElement("span");
+  text.textContent = brandText(version);
+  text.style.opacity = ".75";
+  link.appendChild(npuLogo.icon(doc, 16));
+  link.appendChild(text);
+  // The footer's own type scale; opacity rather than a second colour keeps the
+  // text quieter than Neptun's links without inventing one. The icon stays solid.
+  link.style.cssText = "color:inherit;font-size:13px;text-decoration:none;white-space:nowrap";
   return link;
 }
 

@@ -51,6 +51,9 @@ function fakeEl(tag) {
     removeAttribute(name) {
       delete el.attrs[name];
     },
+    setAttribute(name, value) {
+      el.attrs[name] = value;
+    },
     cloneNode: () => fakeEl(tag),
     appendChild(child) {
       el.children.push(child);
@@ -59,7 +62,7 @@ function fakeEl(tag) {
   return el;
 }
 const fakeSubmit = fakeEl("button");
-fakeSubmit.ownerDocument = { createElement: fakeEl };
+fakeSubmit.ownerDocument = { createElement: fakeEl, createElementNS: (ns, tag) => fakeEl(tag) };
 const banner = loginBanner.buildBanner(fakeSubmit, "Neptun PowerUp! v2.5.0");
 
 assert.strictEqual(banner.tagName, "A", "the name has to be reachable, not just readable");
@@ -69,7 +72,8 @@ assert.strictEqual(banner.rel, "noopener noreferrer", "target=_blank without thi
 // styling - no colour of ours anywhere
 const label = banner.children[0];
 assert.strictEqual(label.tagName, "SPAN");
-assert.strictEqual(label.textContent, "Neptun PowerUp! v2.5.0");
+assert.strictEqual(label.children[0].tagName, "SVG", "the NPU icon leads the label");
+assert.strictEqual(label.children[1].textContent, "Neptun PowerUp! v2.5.0");
 assert.strictEqual(label.style.pointerEvents, "none", "the anchor must take the click, not the clone");
 assert.ok(!/#[0-9a-f]{3}|rgb\(/i.test(banner.style.cssText + JSON.stringify(label.style)), "no hardcoded colours");
 

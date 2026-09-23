@@ -1,6 +1,41 @@
 # Változásnapló
 
-## 3.0.0 — fejlesztés alatt
+## Következő kiadás
+
+- A színtéma a fejléc jobb felső sarkában lévő üzenetszámlálót is átszínezi: a
+  menta helyett a választott szín világos árnyalatát kapja.
+- A Neptun halványkék felületei (kezdőlapi sáv, felhasználói gomb, kiemelések,
+  linkkék) is a választott színárnyalatot veszik fel, a saját világosságukat
+  megtartva. A férőhely-jelvények színei nem változnak.
+- Saját NPU-logó: a láblécben és a bejelentkező oldalon a felirat előtt, a
+  README fejlécében és a Tampermonkey-listában is.
+
+## 3.0.1 — 2026. szept. 23.
+
+**Megjelenés**
+
+- Színtéma: a Neptun kékje helyett választható kiemelőszín (8 előre beállított
+  árnyalat vagy tetszőleges egyéni szín). A fejléc és a lábléc ennek sötét
+  árnyalatát kapja. A beállításokban élőben látszik, a Mégse visszaállítja.
+- Átdolgozott beállításpanel: kapcsolók jelölőnégyzetek helyett, csoportonként
+  kártya, animált lenyitás.
+- Az NPU ablakainak címe már nem tapad a felső szélhez, és a gombjaik a
+  kezdőlapon is mind a négy sarkukon kerekek.
+
+**Tárgyfelvétel**
+
+- Időpont a megjegyzésből: ha egy kurzusnak nincs órarendi adata, de az oktató
+  a megjegyzésbe írta az időpontot (pl. „Hétfő 14-15, A1/216”), az NPU onnan
+  olvassa ki a napot, az időt és a termet. Kiírja a kurzus alá, és az
+  ütközésvizsgálat, valamint a Rajtoló is számol vele. Az órarendi ütközések
+  alopciójaként kikapcsolható.
+
+**Kiadás**
+
+- A kiadás verzióját a tag adja; a GitHub felületén létrehozott release elég,
+  a `package.json` utána automatikusan igazodik.
+
+## 3.0.0 — 2026. szept. 20.
 
 Az első v3-fejlesztési kiadás az új, Angular-alapú Neptun-felülethez. A v3 külön
 kódra épül; a régi WebForms-modulok nem részei ennek a verziónak.
@@ -18,9 +53,6 @@ kódra épül; a régi WebForms-modulok nem részei ennek a verziónak.
   automatikusan megtörni.
 - A Rajtoló és a kurzussori jelzések ugyanazt az órarendi ütközésvizsgálatot
   használják.
-- Ha egy kurzusnak nincs órarendi adata, de a megjegyzésben szerepel az időpont
-  (pl. „Hétfő 14-15, A1/216”), az NPU onnan olvassa ki, kiírja a kurzus alá,
-  és az ütközésvizsgálat is számol vele.
 - A modulkapcsolók már alapból kikapcsolt, külön bekapcsolható modulokat is
   kompatibilisen tudnak tárolni.
 
@@ -52,13 +84,6 @@ kódra épül; a régi WebForms-modulok nem részei ennek a verziónak.
 - Bejelentkezés után felajánlja a visszatérést a legutóbbi oldalra.
 - Az NPU neve és verziója a bejelentkező oldalon és a láblécben, a lábléc
   hibabejelentő linkjével együtt.
-- Színtéma: a Neptun kékje helyett választható kiemelőszín (8 minta vagy
-  egyéni), a fejléc és a lábléc ennek sötét árnyalatát kapja. A beállításokban
-  élőben látszik, a Mégse visszaállítja.
-- Átdolgozott beállításpanel: kapcsolók, csoportonként kártya, animált
-  lenyitás.
-- Az NPU ablakainak címe már nem tapad a felső szélhez, és a gombjaik a
-  kezdőlapon is mind a négy sarkukon kerekek.
 
 **Ami szándékosan kimaradt**
 

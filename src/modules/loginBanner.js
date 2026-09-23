@@ -4,6 +4,7 @@
 // Angular `_ngcontent-*`/`_nghost-*` hash - clone an existing element instead, which
 // drags its real classes and scoping hash along for free.
 const utils = require("../utils");
+const npuLogo = require("../logo");
 
 const ROUTE = "/hallgato_ng/login";
 // A real class, not a hashed one.
@@ -42,11 +43,16 @@ function buildBanner(submitButton, text) {
   label.classList.remove("primary");
   label.style.cssText = reference.style.cssText;
   label.style.pointerEvents = "none";
-  label.style.opacity = "0.6";
   label.style.display = "block";
   label.style.width = "100%";
   label.style.textAlign = "center";
-  label.textContent = text;
+  // Only the text is dimmed; a faded logo looks broken.
+  const caption = doc.createElement("span");
+  caption.textContent = text;
+  caption.style.opacity = "0.6";
+  label.textContent = "";
+  label.appendChild(npuLogo.icon(doc, 18));
+  label.appendChild(caption);
 
   const link = doc.createElement("a");
   link.href = PROJECT_URL;
