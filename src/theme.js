@@ -13,8 +13,9 @@
 // Angular adds component styles as the user navigates, so new sheets are read as
 // they arrive and our element is kept last.
 //
-// ponytail: only the two exact brand colours are mapped, not Neptun's light blue
-// tints (#f2f3fb, #4d94ff); add them to SOURCES if a colour looks off next to them.
+// Neptun's blue-tinted surfaces and accents (hover layers, the dashboard band, the
+// user button, link blue) follow too: each keeps its own saturation and lightness
+// relative to the primary blue, only the hue becomes the chosen one.
 
 const NEPTUN_PRIMARY = "#0943d9";
 const NEPTUN_NAVY = "#213055";
@@ -67,13 +68,37 @@ function hslToRgb([h, s, l]) {
   return [f(0) * 255, f(8) * 255, f(4) * 255];
 }
 
+// Measured on the live NG shell, ordered by use: surfaces, hover layers, outline
+// and link blue. All are tints of the primary blue.
+const TINTS = ["#f2f3fb", "#f8f9ff", "#dce3f0", "#4d94ff", "#c6cafc", "#e8e9f6"];
+
+// `source` relates to Neptun's blue as the result relates to `hex`: same lightness,
+// saturation scaled by the same ratio, the chosen hue.
+function shadeLike(hex, source) {
+  const [h, s] = rgbToHsl(hexToRgb(hex));
+  const [, sourceS, sourceL] = rgbToHsl(hexToRgb(source));
+  const [, primaryS] = rgbToHsl(hexToRgb(NEPTUN_PRIMARY));
+  return rgbToHex(hslToRgb([h, Math.min(1, s * (sourceS / primaryS)), sourceL]));
+}
+
 // Neptun's navy is its blue at about half the saturation and 23% lightness. The same
 // relation applied to the chosen colour keeps header and footer in the family.
 function darkShade(hex) {
+  return shadeLike(hex, NEPTUN_NAVY);
+}
+
+// The header's message counter is Neptun's mint badge (#00dea4 behind navy text).
+// Mint also means "free" on course badges, so it is not mapped globally; only this
+// badge gets a light shade of the chosen hue, which keeps the navy text readable.
+// The same counter repeats in the user menu's "Üzenetek" item.
+const COUNTER_SELECTOR = [
+  ".neptun-badge.neptun-badge--secondary.user-menu__badge",
+  ".mat-mdc-menu-item .neptun-badge.neptun-badge--secondary",
+].join(",");
+
+function lightShade(hex) {
   const [h, s] = rgbToHsl(hexToRgb(hex));
-  const [, navyS, navyL] = rgbToHsl(hexToRgb(NEPTUN_NAVY));
-  const [, primaryS] = rgbToHsl(hexToRgb(NEPTUN_PRIMARY));
-  return rgbToHex(hslToRgb([h, s * (navyS / primaryS), navyL]));
+  return rgbToHex(hslToRgb([h, s, 0.72]));
 }
 
 // Both spellings the CSSOM can hand back: hex as authored (custom properties keep
@@ -83,10 +108,7 @@ function colourPattern(hex) {
   return new RegExp(`${hex}\\b|rgba?\\(\\s*${r}\\s*,\\s*${g}\\s*,\\s*${b}\\s*(,\\s*[\\d.]+%?\\s*)?\\)`, "gi");
 }
 
-const SOURCES = [
-  { pattern: colourPattern(NEPTUN_PRIMARY), role: "primary" },
-  { pattern: colourPattern(NEPTUN_NAVY), role: "navy" },
-];
+const SOURCES = [NEPTUN_PRIMARY, NEPTUN_NAVY, ...TINTS].map(hex => ({ hex, pattern: colourPattern(hex) }));
 
 function mentionsSource(value) {
   return SOURCES.some(source => {
@@ -99,7 +121,7 @@ function recolour(value, palette) {
   return SOURCES.reduce(
     (text, source) =>
       text.replace(source.pattern, (match, alpha) => {
-        const target = palette[source.role];
+        const target = palette[source.hex];
         if (!alpha) {
           return match.startsWith("#") ? target : `rgb(${hexToRgb(target).join(", ")})`;
         }
@@ -134,16 +156,20 @@ function collectTemplates(rules, wrap = [], into = []) {
   return into;
 }
 
+// Source colour -> its replacement for the chosen colour.
+function paletteFor(colour) {
+  return Object.fromEntries(SOURCES.map(({ hex }) => [hex, hex === NEPTUN_PRIMARY ? colour : shadeLike(colour, hex)]));
+}
+
 function renderCss(templates, colour) {
-  const palette = { primary: colour, navy: darkShade(colour) };
-  return templates
-    .map(template => {
-      const body = template.decls
-        .map(([prop, value, priority]) => `${prop}:${recolour(value, palette)}${priority ? " !important" : ""}`)
-        .join(";");
-      return template.wrap.reduceRight((inner, at) => `${at}{${inner}}`, `${template.selector}{${body}}`);
-    })
-    .join("\n");
+  const palette = paletteFor(colour);
+  const rules = templates.map(template => {
+    const body = template.decls
+      .map(([prop, value, priority]) => `${prop}:${recolour(value, palette)}${priority ? " !important" : ""}`)
+      .join(";");
+    return template.wrap.reduceRight((inner, at) => `${at}{${inner}}`, `${template.selector}{${body}}`);
+  });
+  return rules.concat(`${COUNTER_SELECTOR}{background-color:${lightShade(colour)}}`).join("\n");
 }
 
 // --- DOM side -------------------------------------------------------------------
@@ -229,6 +255,8 @@ module.exports = {
   NEPTUN_PRIMARY,
   PRESETS,
   darkShade,
+  lightShade,
+  paletteFor,
   recolour,
   collectTemplates,
   renderCss,

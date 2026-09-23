@@ -8,12 +8,20 @@ const navy = [1, 3, 5].map(i => parseInt(theme.darkShade(theme.NEPTUN_PRIMARY).s
 const [r, g, b] = [1, 3, 5].map(i => parseInt(theme.darkShade("#c2185b").slice(i, i + 2), 16));
 assert.ok(r > g && r > b && r < 110, "a dark shade keeps the hue and gets dark");
 
-const palette = { primary: "#c2185b", navy: "#4a1a2e" };
+// The message counter's shade keeps the hue but is light enough for navy text.
+const light = [1, 3, 5].map(i => parseInt(theme.lightShade("#c2185b").slice(i, i + 2), 16));
+assert.ok(light[0] > light[1] && Math.min(...light) > 120, `light shade: ${light}`);
+
+const palette = { ...theme.paletteFor("#c2185b"), "#213055": "#4a1a2e" };
 assert.strictEqual(theme.recolour("#0943D9", palette), "#c2185b");
 assert.strictEqual(theme.recolour("1px solid rgb(9, 67, 217)", palette), "1px solid rgb(194, 24, 91)");
 assert.strictEqual(theme.recolour("rgba(9, 67, 217, 0.5)", palette), "rgba(194, 24, 91, 0.5)");
 assert.strictEqual(theme.recolour("rgb(33, 48, 85)", palette), "rgb(74, 26, 46)");
 assert.strictEqual(theme.recolour("rgb(9, 67, 2170)", palette), "rgb(9, 67, 2170)");
+// Blue tints keep their lightness and take the chosen hue.
+assert.strictEqual(theme.recolour("#F2F3FB", palette), palette["#f2f3fb"]);
+const tint = [1, 3, 5].map(i => parseInt(palette["#f2f3fb"].slice(i, i + 2), 16));
+assert.ok(tint[0] > tint[1] && Math.min(...tint) > 230, `tint: ${tint}`);
 
 // A CSSOM-shaped fake: only declarations naming a brand colour become templates,
 // and @media wrappers survive the round trip.
@@ -36,6 +44,7 @@ assert.strictEqual(
     ":root{--mdc-x:#c2185b}",
     `.footer{background-color:rgb(${[1, 3, 5].map(i => parseInt(theme.darkShade("#c2185b").slice(i, i + 2), 16)).join(", ")})}`,
     "@media (max-width: 600px){.btn{color:rgb(194, 24, 91) !important}}",
+    `.neptun-badge.neptun-badge--secondary.user-menu__badge,.mat-mdc-menu-item .neptun-badge.neptun-badge--secondary{background-color:${theme.lightShade("#c2185b")}}`,
   ].join("\n")
 );
 
