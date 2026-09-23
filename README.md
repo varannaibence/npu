@@ -127,6 +127,14 @@ A legutóbbi három stabil kiadás. A **Telepítés** link Tampermonkey mellett
 közvetlenül telepíthető.
 
 <details open>
+<summary><strong>v3.0.2</strong> · 2026. szept. 23.</summary>
+
+Nincs külön kiadási megjegyzés.
+
+[Release megnyitása](https://github.com/varannaibence/npu-uj-neptunhoz/releases/tag/v3.0.2) · [Telepítés](https://github.com/varannaibence/npu-uj-neptunhoz/releases/download/v3.0.2/npu.user.js)
+
+</details>
+<details>
 <summary><strong>v3.0.1</strong> · 2026. szept. 23.</summary>
 
 **Megjelenés**
