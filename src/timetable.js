@@ -33,6 +33,70 @@ function normaliseSlot(info) {
   return { day, start, end, rooms: info.rooms || "", dayLabel: info.dayOfWeekText || "" };
 }
 
+// Some tutors leave Neptun's schedule empty and type the class into the course note
+// instead ("Hétfő 14-15, A1/216"). Only full day names are recognised: a lone "K" or
+// "P" is too ambiguous in free text. Neptun's dayOfWeek: 1 = Monday, verified; Sunday
+// as 0 follows the .NET enum and is unverified.
+// ponytail: full Hungarian day names only, add abbreviations if real notes need them.
+const NOTE_DAYS = [
+  ["vas[aá]rnap", 0, "Vasárnap"],
+  ["h[eé]tf[oőö]", 1, "Hétfő"],
+  ["kedd", 2, "Kedd"],
+  ["szerd[aá]", 3, "Szerda"],
+  ["cs[uüű]t[oöő]rt[oöő]k", 4, "Csütörtök"],
+  ["p[eé]ntek", 5, "Péntek"],
+  ["szombat", 6, "Szombat"],
+];
+const NOTE_DAY_SOURCE = NOTE_DAYS.map(([pattern]) => pattern).join("|");
+// After a comma comes the room, unless it is the next day ("Hétfő 14-15, Kedd 10-12").
+const NOTE_SLOT_RE = new RegExp(
+  `(${NOTE_DAY_SOURCE})\\S*\\s*(\\d{1,2})(?:[:.](\\d{2}))?\\s*(?:h|óra)?\\s*[-–—]\\s*(\\d{1,2})(?:[:.](\\d{2}))?(?!\\.?\\s*h[eé]t)(?:\\s*(?:h|óra)\\b)?(?:\\s*,(?!\\s*(?:${NOTE_DAY_SOURCE}))\\s*([^,;\\n]+))?`,
+  "gi"
+);
+
+function clock(hours, minutes) {
+  return `${hours}:${minutes || "00"}`;
+}
+
+// Normalised slots read out of a course note, marked `fromNote` because Neptun shows
+// none of them on the row. Empty for anything that does not look like a class time.
+function slotsFromNote(note) {
+  if (typeof note !== "string" || !note.trim()) {
+    return [];
+  }
+  return Array.from(note.matchAll(NOTE_SLOT_RE))
+    .map(match => {
+      const day = NOTE_DAYS.find(([pattern]) => new RegExp(`^${pattern}$`, "i").test(match[1]));
+      const slot = normaliseSlot({
+        dayOfWeek: day[1],
+        dayOfWeekText: day[2],
+        startTime: clock(match[2], match[3]),
+        endTime: clock(match[4], match[5]),
+        rooms: match[6] ? match[6].trim() : "",
+      });
+      return slot && Object.assign(slot, { fromNote: true });
+    })
+    .filter(Boolean);
+}
+
+// Off until the owning module's settings switch turns it on, so a user who disabled
+// it never gets a guess read out of free text.
+let noteSlotsEnabled = false;
+function setNoteSlotsEnabled(enabled) {
+  noteSlotsEnabled = Boolean(enabled);
+}
+
+// A course row's slots: Neptun's own schedule, or the note when that is empty.
+function courseSlots(row, infos) {
+  const list = Array.isArray(infos)
+    ? infos
+    : row && Array.isArray(row.classInstanceInfos)
+      ? row.classInstanceInfos
+      : [];
+  const slots = list.map(normaliseSlot).filter(Boolean);
+  return slots.length > 0 || !noteSlotsEnabled ? slots : slotsFromNote(row && row.note);
+}
+
 // Half-open intervals: a class ending at 18:00 and another beginning at 18:00 are
 // back-to-back, not a conflict.
 function slotsOverlap(a, b) {
@@ -77,4 +141,12 @@ function findPlanConflicts(picks) {
   return conflicts;
 }
 
-module.exports = { toMinutes, normaliseSlot, slotsOverlap, findPlanConflicts };
+module.exports = {
+  toMinutes,
+  normaliseSlot,
+  slotsFromNote,
+  setNoteSlotsEnabled,
+  courseSlots,
+  slotsOverlap,
+  findPlanConflicts,
+};

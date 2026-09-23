@@ -26,9 +26,14 @@ const ACCENT_CLASSES = ["primary", "secondary", "tertiary", "error", "warning", 
 
 // Always the *primary* button, never "whatever is not primary": that matched the
 // header's Menü button, which is `tertiary`, and turned every secondary dialog
-// button dark navy.
+// button dark navy. The same Menü button is also the only `.flat` on the dashboard,
+// and it is shaped to join the search box (square right corners), so it is never a
+// reference at all.
 function referenceButton() {
-  return document.querySelector("button.flat.primary") || document.querySelector("button.flat");
+  return (
+    document.querySelector("button.flat.primary:not(.header__main-menu)") ||
+    document.querySelector("button.flat:not(.header__main-menu)")
+  );
 }
 
 // For a page with no `.flat` button to clone. Built from `:root` tokens rather than
@@ -38,7 +43,10 @@ function fallbackButton(primary) {
   const skin = primary
     ? `background:${tokens.primary};color:#fff;`
     : `background:${tokens.subtleSurface};color:${tokens.text};`;
-  button.style.cssText = `font:inherit;border:0;border-radius:8px;padding:10px 20px;cursor:pointer;${skin}`;
+  // Sized like Neptun's own dialog buttons (measured 44px tall, 8px corners).
+  button.style.cssText =
+    "font:inherit;font-size:16px;font-weight:600;border:0;border-radius:8px;" +
+    `height:44px;min-width:120px;padding:0 24px;cursor:pointer;${skin}`;
   return button;
 }
 
@@ -132,6 +140,11 @@ function injectCss() {
 }
 .${DIALOG_CLASS} .dialog-close .icon-circle-x { font-size: 24px; line-height: 24px; }
 .${DIALOG_CLASS} .actions { gap: 12px; flex-wrap: wrap; }
+/* Neptun zeroes dialog-title padding with a four-class selector; without this the
+   heading sits flush against the top edge of the dialog. */
+.${OVERLAY_CLASS} .mat-mdc-dialog-container .${DIALOG_CLASS} .basic-dialog-title.mdc-dialog__title {
+  padding-top: 40px;
+}
 .${DIALOG_CLASS} button:focus-visible,
 .${DIALOG_CLASS} input:focus-visible,
 .${DIALOG_CLASS} select:focus-visible {

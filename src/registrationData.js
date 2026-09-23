@@ -23,7 +23,7 @@
 const interceptor = require("./interceptor");
 const router = require("./router");
 const utils = require("./utils");
-const { normaliseSlot } = require("./timetable");
+const { courseSlots } = require("./timetable");
 
 const ROUTE = "/hallgato_ng/subjects/registration";
 const API_BASE = "/hallgato_ng/api/";
@@ -161,7 +161,7 @@ function collectCourses(json, into) {
       type: row.type || "",
       // Measured: true exactly on the courses the student holds.
       isSigned: truthy(row.isSigned),
-      slots: (Array.isArray(row.classInstanceInfos) ? row.classInstanceInfos : []).map(normaliseSlot).filter(Boolean),
+      slots: courseSlots(row),
       ...optionalCourseFields(row),
     });
   });
@@ -208,7 +208,7 @@ function recognisePlannerRow(row) {
     id,
     subjectId,
     source,
-    slots: row[scheduleField].map(normaliseSlot).filter(Boolean),
+    slots: courseSlots(row, row[scheduleField]),
     code: typeof row.code === "string" ? row.code.trim() : "",
     subjectTitle: typeof row.title === "string" ? row.title : "",
     // Measured present on this endpoint's rows too, and optional on purpose: none of

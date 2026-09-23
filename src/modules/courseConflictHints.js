@@ -44,7 +44,8 @@
 //     itself has no timetable of its own to compare - draws an explicit neutral label
 //     and the title says why, instead of staying silent or showing a cryptic "?".
 const router = require("../router");
-const { slotsOverlap } = require("../timetable");
+const { slotsOverlap, setNoteSlotsEnabled } = require("../timetable");
+const settings = require("../settings");
 const badge = require("../badge");
 const registrationData = require("../registrationData");
 
@@ -68,6 +69,16 @@ const meta = {
     {
       capability: "scheduledSubjects",
       to: "a felvett tárgyak figyelembevételéhez",
+    },
+  ],
+  options: [
+    {
+      id: "noteSlots",
+      name: "Időpont a megjegyzésből",
+      description:
+        "Ha a kurzusnak nincs órarendi adata, a megjegyzésből olvassa ki a napot, időt és termet " +
+        "(pl. „Hétfő 14-15, A1/216”), és az ütközésvizsgálat is számol vele.",
+      defaultEnabled: true,
     },
   ],
 };
@@ -247,17 +258,19 @@ function paintHint(row, model) {
 // Neptun already prints the first session's day and time, so repeating it put the
 // same line on screen twice - which is what made the list unreadable. For that first
 // session only the room is ours to add. Any further session is entirely absent from
-// the row, so those are printed in full.
+// the row, so those are printed in full - as is every slot read from the note, since
+// Neptun prints no time at all for those.
 function scheduleLines(candidate) {
   const slots = (candidate && candidate.slots) || [];
   if (slots.length === 0) {
     return null;
   }
   const lines = [];
-  if (slots[0].rooms) {
+  const neptunPrintsFirst = !slots[0].fromNote;
+  if (neptunPrintsFirst && slots[0].rooms) {
     lines.push(slots[0].rooms);
   }
-  slots.slice(1).forEach(slot => {
+  slots.slice(neptunPrintsFirst ? 1 : 0).forEach(slot => {
     const when = `${slot.dayLabel} ${formatClock(slot.start)}–${formatClock(slot.end)}`.trim();
     lines.push(slot.rooms ? `${when} · ${slot.rooms}` : when);
   });
@@ -317,6 +330,7 @@ function applyHints(root, snapshot) {
 }
 
 function initialize() {
+  setNoteSlotsEnabled(settings.isOptionEnabled({ meta }, meta.options[0], settings.readFlags()));
   registrationData.install();
 
   function repaint() {
