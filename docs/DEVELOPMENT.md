@@ -72,13 +72,16 @@ A webpack belépési pontja a `src/index.js`, a metadata a `src/meta.txt` fájlb
 érkezik, a kimenet pedig `dist/npu.user.js`. A build a verziót a
 `package.json`-ból olvassa.
 
-A `.github/workflows/release.yml` `v*` tag pusholásakor:
+A `.github/workflows/release.yml` `v*` tag pusholásakor (ide tartozik az is, ha a
+tagot a GitHub felületén, új release létrehozásakor hozod létre):
 
 1. Node 20 környezetben lefuttatja az `npm ci` parancsot;
-2. buildel és lefuttatja az `npm run verify` ellenőrzést;
-3. a `dist/npu.user.js` fájlt `npu.user.js` néven feltölti a GitHub release-be.
-4. a README legfeljebb három legfrissebb stabil release-ét frissíti a
-   `docs/CHANGELOG.md` megfelelő verziószakaszaival együtt.
+2. a verziót a tagből veszi (`v3.0.2` → `3.0.2`); a tag csak `vX.Y.Z` alakú lehet;
+3. buildel és lefuttatja az `npm run verify` ellenőrzést;
+4. a `dist/npu.user.js` fájlt `npu.user.js` néven feltölti a GitHub release-be;
+5. a default branchen a `package.json` verzióját a taghez igazítja (visszafelé
+   sosem lépteti), és a README legfeljebb három legfrissebb stabil release-ét
+   frissíti a `docs/CHANGELOG.md` megfelelő verziószakaszaival együtt.
 
 Release előtt lokálisan legalább ezt futtasd:
 
@@ -88,18 +91,17 @@ npm run verify
 git diff --check
 ```
 
-A kiadás maga: állítsd be a verziót a `package.json`-ban, írd meg a
-[CHANGELOG.md](CHANGELOG.md) bejegyzését, majd a konkrét verzióhoz tartozó tagot
-hozd létre. A jelenlegi `package.json`-verzióhoz ez:
+A kiadás maga: írd meg a [CHANGELOG.md](CHANGELOG.md) bejegyzését, majd GitHubon
+hozz létre egy új release-t új `vX.Y.Z` taggel a master branchre. A verziót nem
+kell kézzel átírni. Parancssorból ugyanez:
 
 ```sh
-git tag -a v3.0.0 -m "Release v3.0.0"
-git push origin v3.0.0
+git tag -a v3.0.2 -m "Release v3.0.2"
+git push origin v3.0.2
 ```
 
-A workflow a tagot a `package.json` verziójához hasonlítja, és eltérésnél
-megáll. GitHubon a kiadási asset csak a tag feldolgozása után jön létre; addig
-ne használj `latest` letöltési címet v3-telepítéshez.
+GitHubon a kiadási asset csak a tag feldolgozása után jön létre (kb. egy perc);
+a workflow futását az Actions fülön látod.
 
 Kiadási assetként ne tölts fel személyes adatot, tokent, sütit vagy fejlesztői
 `file://` stubot.
