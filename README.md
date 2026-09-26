@@ -62,6 +62,16 @@ lépnek működésbe.
 | --- | --- | :---: |
 | Sorba rendezett tárgyfelvétel | Mentett tárgy- és kurzussorrend, a megadott időpontban soros beküldéssel. [Részletek](#a-rajtoló) | Külön indítható |
 
+### Mindennapok
+
+| Funkció | Leírás | Alapállapot |
+| --- | --- | :---: |
+| Mi van ma? | A kezdőlap tetején, a Neptun kártyáival egyező három kártyán a mai órák teremmel, a befizetési határidők és a futó vagy közelgő tárgyfelvételi időszakok. Ha egy határidő vagy időszak 3 napon belül esedékes, naponta egyszer értesít. | Be |
+| ↳ Befizetendő tételek | Kártya a befizetendő tételekkel, összeggel és határidővel. | Be |
+| ↳ Időszakok | Kártya a futó és 45 napon belül nyíló tárgy- és vizsgajelentkezési időszakokkal. | Be |
+| ↳ Napi értesítés | Bejelentkezés után naponta egyszer jelez, ha egy befizetés vagy időszak 3 napon belül esedékes, vagy egy befizetés lejárt. | Be |
+| Átlagkalkulátor | A Felvett tárgyak oldalon a várt jegyekből kiszámolja a félév súlyozott átlagát, kreditindexét és korrigált kreditindexét. Csak akkor mutat eredményt, ha egy lezárt félév újraszámolása egyezik a Neptun saját értékeivel. | Be |
+
 ### Megjelenés és kényelem
 
 | Funkció | Leírás | Alapállapot |
@@ -69,7 +79,7 @@ lépnek működésbe.
 | Színtéma | A Neptun kékje helyett választható kiemelőszín (8 minta vagy egyéni); a fejléc és a lábléc ennek sötét árnyalatát kapja. | Neptun kék |
 | Kreditbontás | A fejlécben tárgytípusonként bontja a ténylegesen felvett krediteket. | Be |
 | Visszatérés az előző oldalra | Bejelentkezés után felajánlja a legutóbb használt oldal megnyitását. | Be |
-| Munkamenet életben tartása | Aktív használat mellett megújítja a hamarosan lejáró munkamenetet; tétlen lapot nem tart életben. | Ki |
+| Munkamenet életben tartása | A tárgyfelvételi oldalon tétlen fülnél is megakadályozza a kiléptetést: közvetlenül előtte megnyomja a Neptun saját keresőgombját. | Ki |
 | Verzió és hibabejelentés | Az NPU neve és verziója a bejelentkező oldalon és a láblécben, hibabejelentő linkkel. | Be |
 | Frissítés jelzése | Amikor a Tampermonkey frissíti az NPU-t, a következő betöltéskor egyszer jelzi az új verziót, az újdonságok linkjével. | Be |
 
@@ -187,6 +197,14 @@ sorrendben küldi be a jelentkezéseket.
 Az időpontok magyar idő szerint értendők akkor is, ha a gépedet más időzónára
 állítottad (például külföldi részképzésen).
 
+Elindítás után a Rajtoló életben tartja a munkamenetet, amíg az ablaka nyitva
+van. Ehhez nem küld saját frissítő kérést: kb. 10 percenként megnyomja a Neptun
+saját **Tárgy keresése** gombját, a Neptun pedig maga frissít. A nyitás előtti
+másfél percben ugyanígy friss tokent kér, hogy az első jelentkezés ne akadjon
+el. Ha a Neptun nem ad új munkamenetet, a visszaszámlálás mellett figyelmeztetés
+jelenik meg. A hátralévő idő a böngészőfül címében is látszik, a futás végén
+pedig a háttérben lévő fül címe **✔ Rajtoló kész** lesz.
+
 A terv felhasználónként és félévenként a böngésződben tárolódik. A Neptun
 **Tervezőhöz adás** kapcsolója ettől független funkció.
 
@@ -204,8 +222,11 @@ A terv felhasználónként és félévenként a böngésződben tárolódik. A N
 - **A döntést a Neptun hozza.** Éles tárgyfelvételi időszakban még ellenőrizendő
   a sikeres beküldés, a ténylegesen betelt (nem várólistás) kurzus és a
   rangsoros kurzusok szerverválasza.
-- **Tétlen munkamenet.** A tényleg magára hagyott fül munkamenete lejárhat; az
-  NPU szándékosan nem tartja életben vak háttérforgalommal.
+- **Tétlen munkamenet.** A magára hagyott fül munkamenete alapból lejár. Az
+  elindított Rajtoló a visszaszámlálás alatt, a bekapcsolt **Munkamenet
+  életben tartása** pedig mindig életben tartja, de csak a tárgyfelvételi
+  oldalon. Mindkettő a Neptun saját keresőgombját nyomja meg. Más oldalon az NPU
+  nem tudja megakadályozni a kiléptetést.
 - **Ütközésjelzés.** Csak azokkal a kurzusokkal számol, amelyekhez a Neptun
   felismerhető azonosítót, és órarendi adatot vagy értelmezhető megjegyzést ad.
   Hiányzó időpontnál ezt jelzi, és nem állítja, hogy nincs ütközés.

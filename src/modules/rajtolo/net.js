@@ -8,6 +8,8 @@ const {
   REQUEST_TIMEOUT_MS,
   DEFAULT_DELAY_SECONDS,
   STATUS_KEY,
+  FILTER_BUTTON_ID,
+  FRESHEN_TIMEOUT_MS,
 } = require("./constants");
 
 // --- Live I/O: the impure edge the engine is injected into. This module originates
@@ -24,6 +26,8 @@ function httpRequest(method, url, body) {
     }
     try {
       const xhr = new XMLHttpRequest();
+      // Ours, not the page's: Neptun's logout countdown does not see it.
+      xhr.__npuOwn = true;
       xhr.open(method, url);
       xhr.setRequestHeader("Authorization", auth);
       if (body) {
@@ -108,4 +112,30 @@ function liveDelay(seconds) {
   return () => new Promise(resolve => setTimeout(resolve, ms));
 }
 
-module.exports = { httpRequest, liveGet, livePost, liveGetPeriods, liveDelay };
+// Makes Neptun renew its own token rather than calling GetNewTokens ourselves: its
+// search button sends a request, and with an expired token the page renews it first
+// (measured: GetNewTokens, then the search). True once a new header shows up.
+function freshenAuth() {
+  return new Promise(resolve => {
+    const button = document.getElementById(FILTER_BUTTON_ID);
+    if (!button || button.disabled) {
+      resolve(false);
+      return;
+    }
+    let off = () => {};
+    const timer = setTimeout(() => {
+      off();
+      resolve(false);
+    }, FRESHEN_TIMEOUT_MS);
+    off = interceptor.onAuthChange(auth => {
+      if (auth) {
+        off();
+        clearTimeout(timer);
+        resolve(true);
+      }
+    });
+    button.click();
+  });
+}
+
+module.exports = { httpRequest, liveGet, livePost, liveGetPeriods, liveDelay, freshenAuth };

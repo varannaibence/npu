@@ -1,5 +1,5 @@
 // What the server's answers mean, and which combination to send next. Pure.
-const { STATUS_KEY, RANKING_NOTE } = require("./constants");
+const { STATUS_KEY, RANKING_NOTE, PRESTART_FRESHEN_MS, KEEPALIVE_AGE_MS, FRESHEN_RETRY_MS } = require("./constants");
 
 // The only rejection text ever measured.
 const REQUIREMENT_MESSAGE = "Végső tárgykövetelmény nem teljesült";
@@ -109,6 +109,35 @@ function submissionOutcome(courseIndex, courseIds) {
 function msUntilTarget(targetEpochMs, serverOffsetMs, nowMs) {
   const offset = typeof serverOffsetMs === "number" ? serverOffsetMs : 0;
   return targetEpochMs - offset - nowMs;
+}
+
+// The tab title while armed and after the run, so a background tab still shows where
+// the Rajtoló stands. `base` is the page's own title, restored afterwards.
+function runTitle(waitMs, done, base) {
+  if (done) {
+    return `✔ Rajtoló kész – ${base}`;
+  }
+  return `${waitMs > 0 ? formatCountdown(waitMs) : "Rajtoló fut…"} – ${base}`;
+}
+
+// Whether the armed Rajtoló should make the page renew its session now. Pressing
+// the search button renews only an expired token, so before the start this waits for
+// the token to run out; the keep-alive fires only long after that anyway. Local
+// clock on purpose: Neptun judges the token's expiry by this browser's clock too.
+function sessionChore(nowMs, waitMs, timing, lastAttemptMs) {
+  if (typeof lastAttemptMs === "number" && nowMs - lastAttemptMs < FRESHEN_RETRY_MS) {
+    return false;
+  }
+  const expired = !timing || typeof timing.expiresAtMs !== "number" || timing.expiresAtMs <= nowMs;
+  if (expired && waitMs <= PRESTART_FRESHEN_MS) {
+    return true;
+  }
+  return Boolean(timing) && typeof timing.issuedAtMs === "number" && nowMs - timing.issuedAtMs >= KEEPALIVE_AGE_MS;
+}
+
+// Whether a request would go out on a token the server already refuses.
+function tokenExpired(timing, nowMs) {
+  return Boolean(timing) && typeof timing.expiresAtMs === "number" && timing.expiresAtMs <= nowMs;
 }
 
 // Neptun's period dates and the datetime-local field carry no offset: they are
@@ -247,6 +276,9 @@ module.exports = {
   chooseCombination,
   submissionOutcome,
   msUntilTarget,
+  sessionChore,
+  tokenExpired,
+  runTitle,
   wallClockToEpoch,
   isNeptunTimeZone,
   defaultPeriod,

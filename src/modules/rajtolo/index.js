@@ -28,7 +28,7 @@ const { showToast } = require("../../toast");
 const registrationData = require("../../registrationData");
 
 const { collectSubjects, collectCourses, registeredCredits, emptyPlan, loadPlan } = plan;
-const { statusLabel, toastTone, msUntilTarget, wallClockToEpoch, formatCountdown } = protocol;
+const { statusLabel, toastTone, msUntilTarget, wallClockToEpoch, formatCountdown, runTitle } = protocol;
 const { createController, scheduleRun, summarize } = engine;
 const { render, openPlanner, buildLauncher, loadPeriods, loadPlannedCourses, selectedPeriod, dialogQuery } = ui;
 const { decorateCourseRows, decorateSubjectRows, rememberSubjectFromUrl } = rows;
@@ -36,6 +36,7 @@ const { decorateCourseRows, decorateSubjectRows, rememberSubjectFromUrl } = rows
 // Shown in the settings panel; `id` is also the key the switch is stored under.
 const meta = {
   id: "rajtolo",
+  group: "rajtolo",
   name: "Rajtoló",
   description: "Ütemezett tárgyfelvétel: saját tárgy- és kurzussorrend, amit a megadott időpontban sorban beküld.",
   // Only the credit forecast needs this; the run itself does not.
@@ -89,6 +90,8 @@ function ensureState() {
     running: false,
     statusText: "",
     controller: null,
+    // Appended to the countdown when the page would not renew the session.
+    sessionWarning: "",
     // Kept off `plan` on purpose, so it never round-trips through storage: in-memory
     // only, refetched next time the planner opens.
     periods: null,
@@ -101,7 +104,6 @@ function ensureState() {
     catalogTermId: null,
     planLoadedForIdentity: null,
     courseCatalogGeneration: 0,
-    authAtStart: null,
     // Null until a response has been seen; this module never issues that request
     // itself, only rides creditBreakdown's.
     registeredCredits: null,
@@ -113,8 +115,8 @@ function ensureState() {
 
   function resetForTerm(state, termId) {
     if (state.running && state.controller) {
-      state.controller.stop();
       state.statusText = "Leállítás folyamatban…";
+      state.controller.stop();
     }
     state.catalogTermId = termId || null;
     state.courseCatalogGeneration++;
@@ -212,14 +214,16 @@ function ensureState() {
       loadPlannedCourses(plannerState);
     }
   });
-  interceptor.onAuthChange(auth => {
-    if (plannerState.running && auth !== plannerState.authAtStart) {
-      if (plannerState.controller) {
-        plannerState.controller.stop();
-      }
+  // A renewed token is the same user and the run carries on: net.js reads the header
+  // afresh for every request. Only logout or another login stops it.
+  interceptor.onAuthChange((auth, info) => {
+    if (plannerState.running && info && info.userBoundary) {
       plannerState.statusText = auth
         ? "Új munkamenet érzékelve; a futás leállt."
         : "A munkamenet lejárt; a futás leállt.";
+      if (plannerState.controller) {
+        plannerState.controller.stop();
+      }
       render(plannerState);
     }
     if (auth && plannerState.dialog) {
@@ -306,10 +310,10 @@ function onStartStop(state) {
     // prevents anything further from being scheduled - an attempt already in
     // flight has already reached the server and can't be un-sent, only its
     // *next* step is what Stop actually cancels.
+    state.statusText = "Leállítás folyamatban…";
     if (state.controller) {
       state.controller.stop();
     }
-    state.statusText = "Leállítás folyamatban…";
     render(state);
     return;
   }
@@ -340,20 +344,28 @@ function onStartStop(state) {
     return;
   }
   state.controller = createController();
-  state.authAtStart = interceptor.getAuthHeader();
   state.running = true;
+  state.sessionWarning = "";
   state.statusText = "Ütemezve…";
   state.subjectStatus = new Map();
   render(state);
 
+  const baseTitle = document.title;
   scheduleRun(target, state.plan, state.controller, {
     onTick: wait => {
+      document.title = runTitle(wait, false, baseTitle);
       const statusLine = dialogQuery(state, `#${PLANNER_ID}-status`);
       if (statusLine) {
-        statusLine.textContent = `Indulásig: ${formatCountdown(wait)}`;
+        statusLine.textContent = `Indulásig: ${formatCountdown(wait)}${state.sessionWarning}`;
       }
     },
+    onSession: ok => {
+      state.sessionWarning = ok
+        ? ""
+        : " – A Neptun nem adott friss munkamenetet. Kattints valahova a Neptunban, vagy nézd meg, be vagy-e még jelentkezve.";
+    },
     onEvent: (subject, kind, message) => {
+      document.title = runTitle(0, false, baseTitle);
       state.subjectStatus.set(subject.subjectId, kind);
       if (kind !== "running") {
         showToast(`${subject.title || "Ismeretlen tárgy"}: ${statusLabel(kind, message)}`, toastTone(kind));
@@ -365,13 +377,22 @@ function onStartStop(state) {
     },
     onDone: outcomes => {
       state.running = false;
-      state.authAtStart = null;
-      state.statusText =
-        outcomes.length === 0 && state.controller && state.controller.stopped
+      // Stopped before the start: keep a reason already shown, such as a logout.
+      const stoppedEarly = outcomes.length === 0 && state.controller && state.controller.stopped;
+      state.statusText = !stoppedEarly
+        ? summarize(outcomes)
+        : state.statusText === "Leállítás folyamatban…"
           ? "Leállítva a felhasználó által."
-          : summarize(outcomes);
+          : state.statusText;
       state.controller = null;
       render(state);
+      // A hidden tab keeps the "done" mark until the user looks at it.
+      if (outcomes.length > 0 && document.hidden) {
+        document.title = runTitle(0, true, baseTitle);
+        document.addEventListener("visibilitychange", () => (document.title = baseTitle), { once: true });
+      } else {
+        document.title = baseTitle;
+      }
     },
   });
 }
@@ -399,8 +420,8 @@ function initialize() {
       if (plannerState.dialog) {
         plannerState.dialog.close();
       } else if (plannerState.controller) {
-        plannerState.controller.stop();
         plannerState.statusText = "Leállítás folyamatban…";
+        plannerState.controller.stop();
       }
     }
     scheduleTick();
@@ -445,6 +466,7 @@ module.exports = {
   wallClockToEpoch: protocol.wallClockToEpoch,
   defaultPeriod: protocol.defaultPeriod,
   formatCountdown: protocol.formatCountdown,
+  runTitle: protocol.runTitle,
   statusLabel: protocol.statusLabel,
   courseLabel: protocol.courseLabel,
   runSubject: engine.runSubject,

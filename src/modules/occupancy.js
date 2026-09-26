@@ -58,6 +58,7 @@ const naturalOrder = new WeakMap();
 // Shown in the settings panel; `id` is also the key the switch is stored under.
 const meta = {
   id: "occupancy",
+  group: "registration",
   name: "Férőhely és betelt állapot",
   description:
     "Férőhelyet és betelt/várólista állapotot ír a betöltött kurzusokra, és előre rendezi azokat, amikre még lehet jelentkezni.",

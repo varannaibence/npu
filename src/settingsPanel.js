@@ -124,25 +124,25 @@ function setRegistry(modules) {
   registry = modules.filter(module => module && module.meta && module.meta.id);
 }
 
-// Partition modules by their group. Modules without a group go to the default group.
-// Returns an array of { group, modules } where group is the normalized group name or
-// null for the default group.
+// The panel's sections, in this order; they mirror the README's feature tables. A
+// module names its section by id in `meta.group`; one without a known id lands in
+// "Egyéb" at the end rather than disappearing.
+const GROUPS = [
+  { id: "registration", name: "Tárgyfelvétel" },
+  { id: "rajtolo", name: "Rajtoló" },
+  { id: "daily", name: "Mindennapok" },
+  { id: "comfort", name: "Megjelenés és kényelem" },
+];
+
+// Pure: modules -> [{ id, name, modules }], empty sections left out.
 function groupModules(modules) {
-  const grouped = new Map();
-  const DEFAULT_GROUP_ID = null;
-  const DEFAULT_GROUP_NAME = "Funkciók";
-
+  const sections = GROUPS.map(group => ({ id: group.id, name: group.name, modules: [] }));
+  const rest = { id: null, name: "Egyéb", modules: [] };
   modules.forEach(module => {
-    const groupId = (module.meta && module.meta.group && module.meta.group.id) || DEFAULT_GROUP_ID;
-    const groupName = (module.meta && module.meta.group && module.meta.group.name) || DEFAULT_GROUP_NAME;
-
-    if (!grouped.has(groupId)) {
-      grouped.set(groupId, { id: groupId, name: groupName, modules: [] });
-    }
-    grouped.get(groupId).modules.push(module);
+    const id = module.meta && module.meta.group;
+    (sections.find(section => section.id === id) || rest).modules.push(module);
   });
-
-  return Array.from(grouped.values());
+  return sections.concat(rest).filter(section => section.modules.length > 0);
 }
 
 // A button with role="switch": keyboard, focus and screen-reader state for free.
@@ -546,4 +546,4 @@ function registerMenuCommand() {
   }
 }
 
-module.exports = { setRegistry, open, registerMenuCommand };
+module.exports = { setRegistry, open, registerMenuCommand, groupModules, GROUPS };

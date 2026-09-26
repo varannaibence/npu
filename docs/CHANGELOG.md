@@ -17,11 +17,57 @@
 - Az időszakválasztó a folyamatban lévő vagy következő időszakot jelöli ki
   alapból, nem a lista elsőjét, ami gyakran már lezárult.
 - A visszaszámláló egy napnál hosszabb várakozásnál napokat is mutat.
+- Javítva: a „Rajtolóhoz” kapcsoló „A felhasználó azonosítása még nem készült
+  el” hibát adott, és a terv nem volt menthető. Két ok volt. Az oldal betöltéskor
+  küld egy bejelentkezés nélküli kérést, és az NPU ezt kijelentkezésnek vette.
+  A Neptun 5 percenként új tokent kér, és ezt az NPU felhasználóváltásnak vette,
+  ami a futó Rajtolót is leállította („Új munkamenet érzékelve”). Most csak a
+  kijelentkezés vagy egy másik bejelentkezés számít váltásnak.
+- Javítva: a „Rajtolóhoz” kapcsoló minden váltáskor „A Rajtoló terve nem
+  menthető” hibát jelzett, pedig a terv elmentődött. A Tampermonkey mentése nem
+  ad vissza értéket, és az NPU ezt sikertelenségnek olvasta.
+- Elindítás után a Rajtoló életben tartja a munkamenetet, és a nyitás előtt
+  friss tokent kér. Mindkettőhöz a Neptun saját „Tárgy keresése” gombját nyomja
+  meg, így a Neptun maga frissít. Hosszú futás közben is megújítja a lejárt
+  tokent, mielőtt a kérés elakadna.
+- Háttérben lévő fülön a Chrome percenként egyszer futtatja a láncolt
+  időzítőket, ezért az indulás akár egy percet is késhetett. Most egyetlen
+  időzítő indítja a futást.
+- Javítva: ha a visszaszámlálás alatt leállítottad a futást, a státusz
+  „Leállítás folyamatban…” állapotban ragadt.
+- A visszaszámlálás a böngészőfül címében is látszik. Ha a futás háttérben ér
+  véget, a fül címe **✔ Rajtoló kész** lesz, amíg meg nem nézed.
+
+**Új**
+
+- Mi van ma?: a kezdőlapon a „Tisztelt …!” köszöntés helyett, a Neptun saját
+  kártyáival egyező három kártyán látszanak a mai órák teremmel (vagy a következő, ha ma nincs), a befizetési határidők és
+  a futó vagy közelgő tárgyfelvételi időszakok. Ha egy befizetés vagy időszak 3
+  napon belül esedékes, naponta egyszer értesítés jelzi bármelyik oldalon.
+- Átlagkalkulátor: a Felvett tárgyak oldalon a várt jegyekből kiszámolja a félév
+  súlyozott átlagát, kreditindexét és korrigált kreditindexét. Előbb egy lezárt
+  féléven ellenőrzi, hogy az NPU képlete egyezik-e a Neptun saját értékeivel; ha
+  nem, nem mutat számot.
 
 **Egyéb**
 
+- Beállítások: a kapcsolók a README-vel egyező csoportokban jelennek meg
+  (Tárgyfelvétel, Rajtoló, Mindennapok, Megjelenés és kényelem). A „Mi van ma?”
+  Befizetendő és Időszakok kártyája, valamint a napi értesítés külön
+  kapcsolható.
+
+- Munkamenet életben tartása: már tétlen fülnél is működik, de csak a
+  tárgyfelvételi oldalon. Nem küld saját frissítő kérést: 12,5 perc tétlenség
+  után, röviddel a kiléptetés előtt megnyomja a Neptun „Tárgy keresése” gombját,
+  és a Neptun maga frissít. Aki közben használja az oldalt, annak a nézetét
+  nem tölti újra. A régi módszer nem
+  állította vissza a Neptun kiléptetési számlálóját, és ha egyszerre futott a
+  Neptun saját frissítésével, a munkamenet elveszhetett.
+
 - Beállítások: a csak színtémát érintő mentés nem tölti újra az oldalt, és
   változtatás nélkül a gomb egyszerűen bezárja a panelt.
+- Javítva: a Neptun ötpercenkénti tokenfrissítésekor eltűntek az
+  ütközésjelzések, és az NPU újra lekérte a felvett kurzusokat.
 - Táblázatos kurzuslista: bekapcsolt szűrő mellett minden újrarajzolás
   áthelyezte a sorokat, ami a billentyűzetfókuszt is elvihette. Javítva.
 

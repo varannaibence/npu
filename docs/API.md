@@ -338,9 +338,170 @@ Authorization: <Angular által látott fejléc>
 ```
 
 A mért válaszban `accessToken` és `sessionTimeoutInMinutes` szerepel. A token
-értéke soha nem kerül forrásba vagy naplóba. Az `infiniteSession` csak közeli
-lejárat és friss felhasználói aktivitás mellett indít egy ilyen kérést; tétlen
-lapot nem tart életben vak háttérforgalommal.
+értéke soha nem kerül forrásba vagy naplóba.
+
+#### Token és munkamenet — [Mért, unideb, 2026-09-26]
+
+- Az `Authorization` fejléc `Bearer <jwt>`. A payload mezőnevei: `SessionId`,
+  `WebSessionType`, `jti`, `role`, `nbf`, `exp`, `iat`, `iss`, `aud`. Nincs benne
+  `sub` és Neptun-kód sem. `exp - iat` = 300 mp, vagyis az access token 5 percig él.
+- Egy `GetNewTokens` után csak a `jti`, `nbf`, `exp` és `iat` változik. A
+  `SessionId` ugyanaz marad, ez azonosítja a bejelentkezést. Az NPU csak a
+  `SessionId`-t, az `iat`-ot és az `exp`-et olvassa, csak memóriában.
+- A munkamenet egy HttpOnly, Secure, SameSite=Strict sütiben tárolt frissítő
+  token, 15 perces lejárattal. A `GetNewTokens` 200-as válasza `Set-Cookie`-val
+  újabb 15 percre cseréli.
+- A Neptun nem frissít előre. Egy saját kérés előtt veszi észre a lejárt
+  tokent, és akkor a még régi fejléccel küldi a `GetNewTokens`-t. Mért sorrend
+  lejárt tokennél a „Tárgy keresése” (`#filter-table`) gomb megnyomásakor:
+  `POST Account/GetNewTokens` → kb. 2 mp → új fejléccel
+  `POST ContextUserProfile/SaveFilter`, `GET SubjectApplication/SchedulableSubjects`.
+  Érvényes tokennél ugyanez a gomb csak `SaveFilter`-t küldött, `GetNewTokens`-t
+  nem.
+- A frissítés után nem jön új `UserInfo`. Ami a felhasználót a tokencseréhez
+  köti, annak a `SessionId`-ra kell támaszkodnia, nem egy újabb `UserInfo`-ra.
+- Nem minden saját API-kérés visz `Authorization`-t: betöltéskor a
+  `GET General/GetHWebErrorReportingEmailSystemParameter` fejléc nélkül megy, és
+  200-at kap. Fejléc nélküli kérés tehát nem jelent kilépést. Az NPU ezt csak az
+  `Account/*` kéréseknél (pl. `Authenticate`) és a `/login` útvonalon veszi
+  annak.
+- Oldal-újratöltéskor a Neptun nem kér új tokent: a még élő tokent használja
+  tovább (a mérésben 186 mp-cel a lejárata előtt).
+- A fejléc „Munkamenet lejárata” számlálója bármely API-kérésnél 15 percre
+  ugrik vissza, `GetNewTokens` nélkül is. Ebben a mérésben egy `SaveFilter`
+  után. A számláló tehát nem a süti lejáratát mutatja, hanem az utolsó kérés
+  óta eltelt időt.
+- Lejárt access tokennél a Neptun akkor is saját `GetNewTokens`-t küldött
+  (200-as válasz, a hívó stackje a Neptun Angular chunkjára mutatott), amikor a
+  felhasználó kattintás nélkül visszaváltott a háttérben lévő fülre. Ez a 2
+  perces figyelmeztetés előtt történt, kb. 3 perccel a számláló vége előtt.
+- Ugyanabban a pillanatban (16 ms-mal később) az `infiniteSession` saját
+  `GetNewTokens`-e **401**-et kapott. A Neptun kérése épp előtte cserélte le a
+  frissítő sütit, az NPU kérése a régivel ment ki. A párhuzamos saját frissítés
+  tehát versenyhelyzet. Kb. 6 perccel később a Neptun következő, szabályos
+  frissítése is 401-et kapott, és az oldal a `/login`-ra dobott. Valószínű, de
+  nem bizonyított ok: a szerver a lecserélt frissítő token újrahasználatára a
+  teljes munkamenetet visszavonja.
+- Az Angularon kívüli saját `GetNewTokens` 200-at kap, de a „Munkamenet
+  lejárata” számlálót **nem** állítja vissza (14:19 → 14:16). A számláló nullán
+  a Neptun kiléptet, így ez AFK-nál nem tart életben.
+- A lejárat előtti figyelmeztetés nem modális ablak, hanem értesítés a
+  `#push-notifications` panelen (`role="dialog"`, `aria-label="Értesítések"`).
+  Az elem `role="alert"` szövege: „Figyelmeztetés – Kijelentkezés automatikusan
+  ennyi idő múlva: <m:ss>”. A panelnek egyetlen gombja van
+  (`aria-label="Bezárás"`).
+- Valódi egérkattintás erre a gombra: a Neptun saját `GetNewTokens`-e (200), a
+  számláló 15 percre áll vissza, és a panel bezárul. Programból hívott
+  `button.click()` ugyanerre: nincs kérés, és a panel sem zárul be. A Neptun
+  tehát a felhasználói aktivitásra frissít, nem a gomb click eseményére.
+- Programból küldött `mousemove`, `mousedown`, `pointerdown`, `keydown`,
+  `wheel`/`scroll`, `focus` és `visibilitychange` esemény lejárt tokennél sem
+  indított frissítést. Szkriptből általános, minden oldalon működő kiváltó nincs.
+  Mért kiváltó a Neptun saját API-kérése, például a „Tárgy keresése” gombé.
+
+Az NPU nem küld saját `GetNewTokens`-t. A tárgyfelvételi oldalon a Neptun saját
+„Tárgy keresése” gombját nyomja meg, és így a Neptun maga frissít. Az élesített
+Rajtoló akkor, ha a token 10 percnél régebben készült. A bekapcsolt
+`infiniteSession` akkor, ha az oldal 12,5 perce nem küldött saját API-kérést,
+vagyis röviddel a kiléptetés előtt.
+
+## Naptár, befizetendő tételek és törzslap — [Mért, unideb, 2026-09-26]
+
+Csak olvasó `GET`-ek. A dátumok időzóna nélküli magyar faliórás idők
+(`YYYY-MM-DDTHH:mm:ss`).
+
+<a id="api-calendar"></a>
+
+### `GET Calendar/GetStudentTrainings` — [Mért]
+
+Nincs query. `data[]`: `studentTrainingId` (`<guid>`), `studentTrainingName`,
+`actualStudentTraining` (boolean).
+
+### `GET Calendar/GetCalendarEvents` — [Mért]
+
+```http
+GET /hallgato_ng/api/Calendar/GetCalendarEvents
+  ?startDate=<ISO, ezredmásodperccel>&endDate=<ISO>
+  &studentTrainingIds[0]=<guid>
+  &isClassesVisible=true&isExamsVisible=true&isFinalExamsVisible=false
+  &isOnlineMeetingsVisible=false&isOtherEventsVisible=true
+  &isPeriodsVisible=true&isTasksVisible=false
+```
+
+A kapcsolók csak a válaszra hatnak. A naptárnézet szerveroldali beállítását a
+`ContextUserProfile/GetCalendarSelectedTypes` tárolja, és ezt a kérés nem
+módosítja. A `data[]` elemei `eventTypeId` szerint:
+
+| `eventTypeId` | Jelentés | Mért mezők a közöseken túl |
+| --- | --- | --- |
+| hiányzik a mérésből | óra (`isClassesVisible`) | `classInstanceId`, `courseCode`, `courseType`, `courseTutor`, `rooms`, `isOnline`, `onWaitingList`, `subjectId`, `courseId` |
+| `1` | vizsga | `examId`, `examType`, `examTutor`, `rooms`, `isOnline`, `onWaitingList` |
+| `6` | időszak | `periodId`, `term`, `intervalType` (pl. „Vizsgajelentkezési időszak”, „Kurzusjelentkezési időszak”, „Végleges tárgyjelentkezés”, „Bejelentkezési időszak”) |
+| `8` | szünnap | `holidayId` |
+
+Közös mezők: `name`, `startDate`, `endDate`, `studentTrainingId`,
+`fromOtherTraining`, `eventTypeId`. Az órák `eventTypeId` értéke az órás
+mérésből nem került rögzítésre, ezért az NPU az órát a `classInstanceId`
+jelenlétéből ismeri fel. A még meg nem hirdetett időszak egyszerűen hiányzik; a
+mérés napján a 2026/27/1 vizsgajelentkezése még nem szerepelt.
+
+A Naptár oldal natív exportot is kínál (`Calendar/GetLinksForCalendarExport`).
+
+### `GET FinancialItem/GetItemsToBePayed` — [Mért]
+
+Query: `sortAndPage.firstRow`, `sortAndPage.lastRow`. `data[]`: `impositionId`,
+`name`, `value` (szám), `currency`, `latestExecutionDate` (határidő),
+`creationDate`, `term`, `type`, `subjectName`, `subjectCode`,
+`isDHPayingInProgress`, `createdByStudent`, `uiDisplayState`.
+
+A kezdőoldali `Dashboard/GetImpositions` csak a végösszeget adja
+(`impositions[]`: `imposition`, `currency`), határidőt nem.
+
+### `GET Dashboard/GetUpcomingEvents` — [Mért]
+
+Nincs query. `data.gridData[]` legfeljebb 3 elem (`courseCode`, `name`,
+`startDate`, `endDate`, `type`, `online`, terem nélkül), és
+`data.additionalData.additionalUpComingEventsCount`.
+
+<a id="api-registry-sheet"></a>
+
+### Törzslap: félévenkénti átlagok és jegyek — [Mért]
+
+- `GET RegistrySheet/GetAdditionalStudentTrainingTermData`, query nélkül:
+  félévenként `term` (pl. `2025/26/2`), `termId` (szám),
+  `studentTrainingTermDataId` (`<guid>`), `termDataStatus`, és
+  `uiDisplayState.reasons[]` (az aktuális félévnél „Aktuális félév”).
+- `GET RegistrySheet/GetStudentTrainingTermData?studentTrainingTermDataId=<guid>`:
+  az `averagesCreditIndicies[]`, `furtherHalfYearAverages[]` és
+  `furtherCumulativeAverages[]` elemei `{ field, translation, value }`
+  alakúak. A mért `field` értékek: `Credit` (teljesített kredit), `CreditAll`
+  (felvett kredit), `SumCredit`, `SumCreditAll`, `Average` (súlyozott
+  tanulmányi átlag), `SumAverage` (halmozott), `KreditIndex`,
+  `KorrigaltKreditIndex`, `SchoolarshipKey` (ösztöndíjindex),
+  `SumKorrigaltKreditIndex`. A folyamatban lévő félévnél az értékek `null`-ok.
+- `GET RegistrySheet/GetStudentTakenSubjectsByTerm?request.studentTrainingTermDataId=<guid>&filter.firstRow=0&filter.lastRow=<n>`:
+  `data[]`: `subjectName`, `subjectCode`, `subjectCredits`, `signupType`,
+  `result` (pl. „<Címke> (<n>)”, „Teljesítette”, vagy `null`),
+  `uiDisplayState.reasons[]` („Teljesítve” / „Nem teljesített”).
+
+Unideben két lezárt félévre egyezően igazolt képlet:
+
+- jegy: a `result` végén álló `(n)`; a „Teljesítette” 5-nek számít, a `null`
+  nem teljesített;
+- `Credit` = a teljesített (jegy ≥ 2) tárgyak kreditje, `CreditAll` = az összes
+  felvett tárgy kreditje;
+- `Average` = Σ(kredit × jegy) / Σ(kredit), a teljesített tárgyakon;
+- `KreditIndex` = Σ(kredit × jegy) / 30, a teljesített tárgyakon;
+- `KorrigaltKreditIndex` = `KreditIndex` × `Credit` / `CreditAll`.
+
+A `SchoolarshipKey` az egyik félévben a kreditindexszel egyezett, a másikban
+nem; a képlete ismeretlen. Más intézmény képlete eltérhet, ezért az NPU egy
+lezárt félévre mindig újraellenőrzi.
+
+A „Tanulmányok → Felvett tárgyak” oldal `GET TakenSubjects` válasza a
+tárgyankénti krediteket adja (`subjectCredit`, `requirementType`, `termId`),
+jegyet nem. A `GET TakenSubjects/Terms` félévenként `creditSum` és
+`completedCredit` értéket ad.
 
 ## Korábbi mintatantervi mérés és további útvonalak
 

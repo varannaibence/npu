@@ -75,6 +75,33 @@ assert.strictEqual(
   "a day is not shown as 26 hours"
 );
 
+// The armed Rajtoló keeps its session by making the page renew the token. Pressing
+// search renews only an EXPIRED token (measured), so right before the start it waits
+// for expiry; the keep-alive asks once the token is old enough to be long expired.
+{
+  const { sessionChore, tokenExpired } = require("../src/modules/rajtolo/protocol");
+  const now = 10 * 60 * 60 * 1000;
+  const fresh = { issuedAtMs: now - 60000, expiresAtMs: now + 240000 };
+  const expired = { issuedAtMs: now - 360000, expiresAtMs: now - 60000 };
+  assert.strictEqual(sessionChore(now, 30000, fresh, null), false, "a live token cannot be renewed yet");
+  assert.strictEqual(sessionChore(now, 30000, expired, null), true, "an expired token just before the start");
+  assert.strictEqual(sessionChore(now, 5 * 60000, expired, null), false, "not yet: far from the start");
+  assert.strictEqual(
+    sessionChore(now, 60 * 60000, { issuedAtMs: now - 11 * 60000, expiresAtMs: now - 6 * 60000 }, null),
+    true,
+    "keep-alive while armed, before the 15-minute session runs out"
+  );
+  assert.strictEqual(sessionChore(now, 30000, expired, now - 20000), false, "a failed ask is not repeated at once");
+  assert.strictEqual(sessionChore(now, 30000, { issuedAtMs: null, expiresAtMs: null }, null), true, "unknown");
+  assert.strictEqual(tokenExpired(expired, now), true);
+  assert.strictEqual(tokenExpired(fresh, now), false);
+  assert.strictEqual(tokenExpired({ issuedAtMs: null, expiresAtMs: null }, now), false, "unknown: just send it");
+}
+
+assert.strictEqual(rajtolo.runTitle(65000, false, "Neptun Web"), "1p 5mp – Neptun Web", "countdown in the tab");
+assert.strictEqual(rajtolo.runTitle(0, false, "Neptun Web"), "Rajtoló fut… – Neptun Web");
+assert.strictEqual(rajtolo.runTitle(0, true, "Neptun Web"), "✔ Rajtoló kész – Neptun Web");
+
 // Neptun's times are Hungarian wall-clock time whatever zone the browser is in, so a
 // student registering from abroad still starts at the Hungarian opening.
 assert.strictEqual(rajtolo.wallClockToEpoch("2026-02-02T10:00"), Date.UTC(2026, 1, 2, 9, 0), "winter: UTC+1");
@@ -733,6 +760,40 @@ async function runEngineChecks() {
     assert.strictEqual(clearedTimer, 123, "Stop clears the pending countdown timer");
     assert.strictEqual(controller.timer, null, "a stopped controller releases its timer handle");
   } finally {
+    global.clearTimeout = originalClearTimeout;
+  }
+}
+
+// The start must be one timer armed from the click. Chrome runs a CHAINED timer in a
+// tab hidden for 5+ minutes only once a minute, so a countdown chain could start the
+// run up to a minute late. And Stop before the start has to report back: it clears
+// the timers, so nothing else ever would.
+{
+  const engine = require("../src/modules/rajtolo/engine");
+  assert.strictEqual(engine.startTimeout(-5), 0);
+  assert.strictEqual(engine.startTimeout(3e9), 2147483647, "setTimeout cannot hold longer; it re-arms instead");
+  const originalSetTimeout = global.setTimeout;
+  const originalClearTimeout = global.clearTimeout;
+  const timers = [];
+  global.setTimeout = (fn, ms) => timers.push({ fn, ms });
+  global.clearTimeout = () => {};
+  try {
+    const controller = rajtolo.createController();
+    let done = null;
+    const target = Date.now() + (interceptor.getServerOffsetMs() || 0) + 600000;
+    engine.scheduleRun(target, { subjects: [], delaySeconds: 1 }, controller, {
+      onTick() {},
+      onEvent() {},
+      onDone: outcomes => {
+        done = outcomes;
+      },
+    });
+    assert.strictEqual(timers.length, 2, "one display tick and one start timer");
+    assert.ok(timers[1].ms > 590000, "the start timer sleeps the whole wait at once");
+    controller.stop();
+    assert.deepStrictEqual(done, [], "Stop before the start reports back at once");
+  } finally {
+    global.setTimeout = originalSetTimeout;
     global.clearTimeout = originalClearTimeout;
   }
 }

@@ -12,6 +12,7 @@ const NOTICE_MS = 15000;
 // Shown in the settings panel; `id` is also the key the switch is stored under.
 const meta = {
   id: "updateNotice",
+  group: "comfort",
   name: "Frissítés jelzése",
   description: "Frissítés után egyszer jelzi az új verziót, az újdonságok linkjével.",
 };

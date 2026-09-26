@@ -447,6 +447,8 @@ function schedulePlannerFallback() {
     let settled = false;
     try {
       const xhr = new XMLHttpRequest();
+      // Ours, not the page's: Neptun's logout countdown does not see it.
+      xhr.__npuOwn = true;
       plannerFallbackRequest = xhr;
       plannerFallbackInFlight = true;
       const finish = success => {
@@ -647,9 +649,10 @@ function install() {
       plannerFallbackAsked = false;
       return;
     }
+    // A renewed token may retry a failed fallback, but must not repeat a successful
+    // one: that came every five minutes. A new user resets through the Neptun code.
     if (auth !== plannerFallbackFailedAuth) {
       plannerFallbackFailedAuth = null;
-      plannerFallbackAsked = false;
     }
     schedulePlannerFallback();
   });

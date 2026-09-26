@@ -261,8 +261,8 @@ function openPlanner(state) {
     ],
     onClose() {
       if (state.running && state.controller) {
-        state.controller.stop();
         state.statusText = "Leállítás folyamatban…";
+        state.controller.stop();
       }
       state.dialog = null;
     },

@@ -75,7 +75,7 @@ const meta = {
     "A kinyitott tárgy kurzusait táblázatként jeleníti meg (állapot, kód, nap/idő, " +
     "terem, létszám, ütközés, akciók) a natív, ismétlődő lista helyett.",
   defaultEnabled: false,
-  group: { id: "design", name: "Megjelenés" },
+  group: "registration",
   options: [
     {
       id: "sortFilter",

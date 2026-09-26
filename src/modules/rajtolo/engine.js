@@ -8,8 +8,10 @@ const {
   chooseCombination,
   submissionOutcome,
   msUntilTarget,
+  sessionChore,
+  tokenExpired,
 } = require("./protocol");
-const { liveGet, livePost, liveDelay } = require("./net");
+const { liveGet, livePost, liveDelay, freshenAuth } = require("./net");
 const { MAX_ATTEMPTS } = require("./constants");
 
 // --- The run engine. Every network and timing effect is injected via `deps`, so the
@@ -126,20 +128,38 @@ function summarize(outcomes) {
 }
 
 function createController() {
-  const controller = { stopped: false, timer: null };
+  // `timer` is the display tick, `startTimer` the one that actually begins the run.
+  const controller = { stopped: false, timer: null, startTimer: null };
   controller.stop = function stop() {
     controller.stopped = true;
-    if (controller.timer !== null) {
-      clearTimeout(controller.timer);
-      controller.timer = null;
-    }
+    ["timer", "startTimer"].forEach(key => {
+      if (controller[key] !== null) {
+        clearTimeout(controller[key]);
+        controller[key] = null;
+      }
+    });
   };
   return controller;
+}
+
+// setTimeout keeps its delay in a signed 32-bit int; anything longer fires at once.
+const MAX_TIMEOUT_MS = 2147483647;
+
+// How long the start timer should sleep. Never negative, never past what setTimeout
+// can hold: a clamped wait simply re-arms when it fires.
+function startTimeout(waitMs) {
+  return Math.min(Math.max(0, waitMs), MAX_TIMEOUT_MS);
 }
 
 // Schedules against the server-corrected clock. The last seconds are local timer
 // checks only: a pre-flight GET here used to fire several duplicate requests before
 // the run and added load without improving the server-side decision.
+//
+// The start is ONE timer armed straight from the click, not the end of a timer chain.
+// Chrome runs chained timers in a tab hidden for 5+ minutes only once a minute, so a
+// chained countdown could start the run up to a minute late. The chained tick below
+// only repaints the countdown; being throttled costs nothing there. If the server
+// offset moved while waiting, the start timer fires early and simply re-arms once.
 //
 // Detecting the ACTUAL opening (an institution can open late) would need a measured
 // closed-vs-open response shape, which we do not have. So this does only the safe
@@ -152,34 +172,85 @@ function scheduleRun(targetEpochMs, plan, controller, callbacks) {
       return;
     }
     finished = true;
+    if (controller.timer !== null) {
+      clearTimeout(controller.timer);
+      controller.timer = null;
+    }
     callbacks.onDone(outcomes);
+  }
+  const waitNow = () => msUntilTarget(targetEpochMs, interceptor.getServerOffsetMs(), Date.now());
+  // Stop clears the timers, so before the start nothing would ever report back: the
+  // status stayed on "Leállítás folyamatban…" for good. Once running, runPlan does.
+  let started = false;
+  const stop = controller.stop;
+  controller.stop = function stopScheduled() {
+    stop();
+    if (!started) {
+      finish([]);
+    }
+  };
+
+  // Keeps the session alive while armed, and renews the token just before the start.
+  let freshening = false;
+  let lastFreshenAt = null;
+  function keepSession(wait) {
+    const now = Date.now();
+    if (freshening || !sessionChore(now, wait, interceptor.getAuthTiming(), lastFreshenAt)) {
+      return;
+    }
+    freshening = true;
+    lastFreshenAt = now;
+    freshenAuth().then(ok => {
+      freshening = false;
+      if (!finished) {
+        callbacks.onSession(ok);
+      }
+    });
   }
 
   function tick() {
+    controller.timer = null;
     if (controller.stopped) {
       finish([]);
       return;
     }
-    const wait = msUntilTarget(targetEpochMs, interceptor.getServerOffsetMs(), Date.now());
+    const wait = waitNow();
     callbacks.onTick(wait);
-    if (wait <= 0) {
-      begin();
+    keepSession(wait);
+    if (wait > 0) {
+      controller.timer = setTimeout(tick, wait > 5000 ? 2000 : 1000);
+    }
+  }
+  function armStart() {
+    controller.startTimer = null;
+    if (controller.stopped) {
+      finish([]);
       return;
     }
-    const nextCheckIn = wait > 5000 ? 2000 : 1000;
-    controller.timer = setTimeout(() => {
-      controller.timer = null;
-      tick();
-    }, nextCheckIn);
+    const wait = waitNow();
+    if (wait > 0) {
+      controller.startTimer = setTimeout(armStart, startTimeout(wait));
+      return;
+    }
+    begin();
   }
   function begin() {
-    if (controller.stopped) {
-      finish([]);
-      return;
-    }
+    started = true;
+    // A long run outlives the 5-minute token; renew it before a request would bounce.
+    // ponytail: a token expiring in the milliseconds between check and arrival still
+    // 401s, which halts the run as unknown - fail-closed, never a blind resend.
+    const fresh =
+      request =>
+      async (...args) => {
+        // No header at all is a token a 401 has just retired.
+        if (!interceptor.getAuthHeader() || tokenExpired(interceptor.getAuthTiming(), Date.now())) {
+          await freshenAuth();
+        }
+        return request(...args);
+      };
     const deps = {
-      get: liveGet,
-      post: livePost,
+      get: fresh(liveGet),
+      post: fresh(livePost),
       delay: liveDelay(plan.delaySeconds),
       onEvent: callbacks.onEvent,
       controller,
@@ -196,6 +267,7 @@ function scheduleRun(targetEpochMs, plan, controller, callbacks) {
       });
   }
   tick();
+  armStart();
 }
 
-module.exports = { runSubject, runPlan, summarize, createController, scheduleRun };
+module.exports = { runSubject, runPlan, summarize, createController, scheduleRun, startTimeout };

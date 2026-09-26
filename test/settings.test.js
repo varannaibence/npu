@@ -242,3 +242,30 @@ async function run() {
 }
 
 module.exports = { run };
+
+// --- the panel's sections: fixed order, every real module in a known one ---
+{
+  const fs = require("fs");
+  const path = require("path");
+  const { groupModules, GROUPS } = require("../src/settingsPanel");
+  const fake = (id, group) => ({ meta: { id, group } });
+  assert.deepStrictEqual(
+    groupModules([fake("a", "comfort"), fake("b", "registration"), fake("c", "nope"), fake("d", "registration")]).map(
+      section => [section.name, section.modules.map(m => m.meta.id)]
+    ),
+    [
+      ["Tárgyfelvétel", ["b", "d"]],
+      ["Megjelenés és kényelem", ["a"]],
+      ["Egyéb", ["c"]],
+    ],
+    "sections keep the README's order, not the registry's; an unknown group is still shown"
+  );
+  const known = new Set(GROUPS.map(group => group.id));
+  const indexSource = fs.readFileSync(path.join(__dirname, "../src/index.js"), "utf8");
+  const modulePaths = Array.from(indexSource.matchAll(/require\("\.\/(modules\/[^"]+)"\)/g), m => m[1]);
+  assert.ok(modulePaths.length > 10, "the registry was read");
+  modulePaths.forEach(modulePath => {
+    const { meta } = require(path.join(__dirname, "../src", modulePath));
+    assert.ok(known.has(meta.group), `${meta.id} belongs to a panel section`);
+  });
+}

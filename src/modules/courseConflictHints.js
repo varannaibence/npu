@@ -61,6 +61,7 @@ const TIME_TEXT = /\d{1,2}:\d{2}\s*[-–]\s*\d{1,2}:\d{2}/;
 
 const meta = {
   id: "courseConflictHints",
+  group: "registration",
   name: "Órarend és ütközések a kurzusoknál",
   description:
     "Kiírja a kurzus termét és minden óraalkalmát, megnevezi az ütköző tárgyat, ha " +

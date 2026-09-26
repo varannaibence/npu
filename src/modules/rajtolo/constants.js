@@ -26,6 +26,18 @@ const DEFAULT_DELAY_SECONDS = 2;
 // was about to answer.
 const REQUEST_TIMEOUT_MS = 180000;
 
+// Neptun renews its 5-minute token only when its own next request finds it expired,
+// and only that renewal extends the 15-minute session cookie (measured on unideb).
+// Before the start: the window in which an expired token is renewed. Wide enough that
+// a hidden tab, whose chained timers run once a minute, still gets a tick inside it.
+const PRESTART_FRESHEN_MS = 90 * 1000;
+// While armed: a token this old asks for a renewal, well before the cookie runs out.
+const KEEPALIVE_AGE_MS = 10 * 60 * 1000;
+// A renewal that did not come is not asked for again sooner than this.
+const FRESHEN_RETRY_MS = 60 * 1000;
+// How long a button press may take to bring a new header; measured about 2 s.
+const FRESHEN_TIMEOUT_MS = 10 * 1000;
+
 // Ranking courses: submission order is irrelevant, points decide. Shown wherever a
 // course is listed, so the ranking editor never implies a control that does nothing.
 const RANKING_NOTE = () => " — rangsoros: a sorrend itt nem számít, pontszám dönt";
@@ -50,4 +62,8 @@ module.exports = {
   REQUEST_TIMEOUT_MS,
   RANKING_NOTE,
   STATUS_KEY,
+  PRESTART_FRESHEN_MS,
+  KEEPALIVE_AGE_MS,
+  FRESHEN_RETRY_MS,
+  FRESHEN_TIMEOUT_MS,
 };
