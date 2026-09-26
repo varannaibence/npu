@@ -127,6 +127,18 @@ A legutóbbi három stabil kiadás. A **Telepítés** link Tampermonkey mellett
 közvetlenül telepíthető.
 
 <details open>
+<summary><strong>v3.0.3</strong> · 2026. szept. 26.</summary>
+
+## What's Changed
+* [FIXED | Rajtoló nem működik az ME neptunján] - fill missing subject ids from the course request URL by @varannaibence in https://github.com/varannaibence/npu-uj-neptunhoz/pull/6
+
+
+**Full Changelog**: https://github.com/varannaibence/npu-uj-neptunhoz/compare/v3.0.2...v3.0.3
+
+[Release megnyitása](https://github.com/varannaibence/npu-uj-neptunhoz/releases/tag/v3.0.3) · [Telepítés](https://github.com/varannaibence/npu-uj-neptunhoz/releases/download/v3.0.3/npu.user.js)
+
+</details>
+<details>
 <summary><strong>v3.0.2</strong> · 2026. szept. 23.</summary>
 
 Nincs külön kiadási megjegyzés.
@@ -161,79 +173,6 @@ Nincs külön kiadási megjegyzés.
   a `package.json` utána automatikusan igazodik.
 
 [Release megnyitása](https://github.com/varannaibence/npu-uj-neptunhoz/releases/tag/v3.0.1) · [Telepítés](https://github.com/varannaibence/npu-uj-neptunhoz/releases/download/v3.0.1/npu.user.js)
-
-</details>
-<details>
-<summary><strong>v3.0.0</strong> · 2026. szept. 20.</summary>
-
-Az első v3-fejlesztési kiadás az új, Angular-alapú Neptun-felülethez. A v3 külön
-kódra épül; a régi WebForms-modulok nem részei ennek a verziónak.
-
-**Tárgyfelvétel**
-
-- A kurzussorokon megjelenik, ha az adott időpont a Neptun natív tervezőjében
-  lévő vagy már felvett kurzussal ütközik, a másik tárgy és időpont nevével.
-- Alapból kikapcsolt, beállításból bekapcsolható, csak asztali tárgyfelvételnél
-  működő kompakt nézet. Ez NPU-specifikus elrendezés, ezért nem írja át
-  automatikusan a megszokott felületet; hogy kinek melyik nézet kényelmes,
-  szubjektív.
-- Alapból kikapcsolt táblázatos kurzuslista, mert a natív kurzuslistát NPU-
-  specifikus nézetre cseréli, és a megszokott munkafolyamatot nem akarjuk
-  automatikusan megtörni.
-- A Rajtoló és a kurzussori jelzések ugyanazt az órarendi ütközésvizsgálatot
-  használják.
-- A modulkapcsolók már alapból kikapcsolt, külön bekapcsolható modulokat is
-  kompatibilisen tudnak tárolni.
-
-**További tárgyfelvételi változások**
-
-- Alapból kikapcsolt, beállítással bekapcsolható tárgylista-automatikus betöltés,
-  hogy ne indítson a felhasználó helyett automatikus keresést és extra kérést.
-- A kurzusok mellett látszik a férőhely, a betelt állapot és a várólista;
-  a tárgyakon az, hogy hány kurzusuk telt már be.
-- A „Betelt kurzusok hátra" kapcsoló előre rendezi azt, amire még lehet
-  jelentkezni, és a kapcsolása vissza is fordítható.
-- A listák egy lapon lényegesen több sort töltenek be.
-
-**Rajtoló**
-
-- Saját, felhasználó és félév szerint tárolt terv, soros beküldéssel.
-- Időszakválasztó a Neptun saját tárgyfelvételi időszakaiból, szerverhez
-  igazított visszaszámlálással.
-- Órarendütközés-jelzés és kredit-előrejelzés a terven belül.
-- A várólistára kerülést külön jelzi a sikeres felvételtől.
-- Ismeretlen szerverválasznál megáll, nem könyvel el találgatott sikert.
-
-**Egyéb**
-
-- Kreditbontás tárgytípusonként a fejléc saját kártyájában.
-- Alapból kikapcsolt munkamenet-frissítés, mert háttérforgalmat indít; aktív
-  használat mellett megújítja a közeli lejáratú munkamenetet, tétlen lapot nem
-  tart életben.
-- Bejelentkezés után felajánlja a visszatérést a legutóbbi oldalra.
-- Az NPU neve és verziója a bejelentkező oldalon és a láblécben, a lábléc
-  hibabejelentő linkjével együtt.
-
-**Ami szándékosan kimaradt**
-
-- `autoLogin`: a 2FA, a karbantarthatóság és a jelszókezelés kockázatai miatt.
-- A bizonytalan adatokra épülő mintatantervi hiány-nézet.
-- Az üzenetek tömeges olvasottra állítása kimaradt. Az alapja elkészült, de az
-  élő oldalon nem találtunk hozzá biztonságosan használható lapozási végpontot.
-
-**Adatvédelem**
-
-- A régi `neptun.users` GM-kulcsot az új kód nem olvassa, nem importálja és nem
-  törli. A saját `data.users` rekordokban maradt érzékeny bejelentkezési
-  mezőket induláskor kitisztítja, a nem érzékeny terveket és adatokat megtartja.
-
-**Korlátok**
-
-- Az intézményenkénti működési állapotot a [TESTED.md](docs/TESTED.md) tartalmazza.
-- A sikeres és a ténylegesen betelt tárgyfelvételi válasz éles ellenőrzése még
-  hátra van; ezek csak nyitott tárgyfelvételi időszakban mérhetők.
-
-[Release megnyitása](https://github.com/varannaibence/npu-uj-neptunhoz/releases/tag/v3.0.0) · [Telepítés](https://github.com/varannaibence/npu-uj-neptunhoz/releases/download/v3.0.0/npu.user.js)
 
 </details>
 
