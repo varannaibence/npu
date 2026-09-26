@@ -136,7 +136,6 @@ src/modules/rajtolo/
   net.js        a modul saját hitelesített kérései
   ui.js         a tervező dialógus
   rows.js       a kapcsoló és a badge az oldalon
-  toast.js      saját értesítések
   constants.js  mért horgonyok és hangolható értékek
 ```
 

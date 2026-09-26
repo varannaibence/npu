@@ -2,6 +2,12 @@
 
 ## Következő kiadás
 
+- Frissítés jelzése: amikor a Tampermonkey frissíti az NPU-t, a következő
+  betöltéskor egy értesítés jelzi az új verziót, az „Újdonságok” linkkel. Csak
+  egyszer jelenik meg, első telepítéskor nem. A beállításokban kikapcsolható.
+- A frissítési és hibabejelentő linkek az új repócímre (`npu-uj-neptunhoz`)
+  mutatnak; eddig a régi cím átirányítása miatt működtek.
+
 ## 3.0.3 — 2026. szept. 26.
 
 - Rajtoló: javítva, hogy egyes egyetemek Neptunján (pl. ME) a kurzus Rajtolóhoz

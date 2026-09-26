@@ -13,8 +13,8 @@ const LOGO_SELECTOR = ".footer__logo";
 // Cloned, so ours inherits the real colour, focus ring and scoping hash.
 const REPORT_SELECTOR = "a.footer__report";
 const ROW_ID = "npu-footer-brand";
-const ISSUES_URL = "https://github.com/varannaibence/npu/issues";
-const PROJECT_URL = "https://github.com/varannaibence/npu";
+const ISSUES_URL = "https://github.com/varannaibence/npu-uj-neptunhoz/issues";
+const PROJECT_URL = "https://github.com/varannaibence/npu-uj-neptunhoz";
 
 // Shown in the settings panel; `id` is also the key the switch is stored under.
 const meta = {

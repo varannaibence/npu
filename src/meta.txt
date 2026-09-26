@@ -5,7 +5,7 @@
 // @author         Mate Solymosi; új Neptun átírás: Varannai Bence
 // @version        <version>
 // @icon           https://raw.githubusercontent.com/varannaibence/npu-uj-neptunhoz/master/docs/assets/icon-128.png
-// @downloadURL    https://github.com/varannaibence/npu/releases/latest/download/npu.user.js
+// @downloadURL    https://github.com/varannaibence/npu-uj-neptunhoz/releases/latest/download/npu.user.js
 // The NG URL pattern is broad enough to load on NG hosts. See docs/TESTED.md for
 // the measured compatibility boundary; do not infer support for another
 // institution from this include alone.

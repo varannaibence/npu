@@ -165,7 +165,7 @@ if (require.main === module && process.argv[2] === "--promote") {
   }
 } else if (require.main === module) {
   try {
-    const repository = process.env.GITHUB_REPOSITORY || "varannaibence/npu";
+    const repository = process.env.GITHUB_REPOSITORY || "varannaibence/npu-uj-neptunhoz";
     const releases = JSON.parse(fs.readFileSync(0, "utf8"));
     const changelog = fs.readFileSync(CHANGELOG_PATH, "utf8");
     const changed = syncReadme(releases, repository, README_PATH, changelog);

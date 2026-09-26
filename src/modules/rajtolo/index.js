@@ -13,7 +13,6 @@
 //   net.js       this module's own authenticated calls
 //   ui.js        the planner dialog
 //   rows.js      the switch and badge added to the page
-//   toast.js     our own notifications
 const interceptor = require("../../interceptor");
 const router = require("../../router");
 const storage = require("../../storage");
@@ -25,7 +24,7 @@ const protocol = require("./protocol");
 const engine = require("./engine");
 const ui = require("./ui");
 const rows = require("./rows");
-const { showToast } = require("./toast");
+const { showToast } = require("../../toast");
 const registrationData = require("../../registrationData");
 
 const { collectSubjects, collectCourses, registeredCredits, emptyPlan, loadPlan } = plan;
