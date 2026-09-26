@@ -18,7 +18,19 @@ function rememberSubjectFromUrl(state, url) {
     return;
   }
   const subjectId = params.get("subjectId");
-  if (!subjectId || state.subjectCatalog.has(subjectId)) {
+  if (!subjectId) {
+    return;
+  }
+  const known = state.subjectCatalog.get(subjectId);
+  if (known) {
+    // A SchedulableSubjects row can arrive without some of the ids (seen on other
+    // universities' Neptun). Without termId the plan cannot be saved and the switch
+    // only ever shows an error, so fill the gaps from the request the app just made.
+    ["termId", "curriculumTemplateId", "curriculumTemplateLineId"].forEach(key => {
+      if (!known[key] && params.get(key)) {
+        known[key] = params.get(key);
+      }
+    });
     return;
   }
   state.subjectCatalog.set(subjectId, {
