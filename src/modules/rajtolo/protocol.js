@@ -132,7 +132,11 @@ function sessionChore(nowMs, waitMs, timing, lastAttemptMs) {
   if (expired && waitMs <= PRESTART_FRESHEN_MS) {
     return true;
   }
-  return Boolean(timing) && typeof timing.issuedAtMs === "number" && nowMs - timing.issuedAtMs >= KEEPALIVE_AGE_MS;
+  // Expired as well as old: a longer-lived token elsewhere would not be renewed by
+  // the press, which would then only repeat and warn.
+  return (
+    expired && Boolean(timing) && typeof timing.issuedAtMs === "number" && nowMs - timing.issuedAtMs >= KEEPALIVE_AGE_MS
+  );
 }
 
 // Whether a request would go out on a token the server already refuses.

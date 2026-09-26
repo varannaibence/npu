@@ -185,7 +185,7 @@ assert.strictEqual(interceptor.isUserBoundary("s-1", null, null, undefined), tru
 {
   const events = [];
   const unsubscribe = interceptor.onAuthChange((auth, info) => {
-    events.push({ auth: Boolean(auth), userBoundary: info.userBoundary });
+    events.push({ auth: Boolean(auth), userBoundary: info.userBoundary, previous: info.previousSessionId });
   });
   const request = (header, status) => {
     const req = new fakeWindow.XMLHttpRequest();
@@ -200,17 +200,26 @@ assert.strictEqual(interceptor.isUserBoundary("s-1", null, null, undefined), tru
   request(fakeJwt({ SessionId: "s-1", iat: 1300, exp: 1600 }));
   assert.deepStrictEqual(interceptor.getAuthTiming(), { issuedAtMs: 1300000, expiresAtMs: 1600000 });
   request(fakeJwt({ SessionId: "s-1", iat: 1600, exp: 1900 }), 401);
+  assert.deepStrictEqual(
+    interceptor.getAuthTiming(),
+    { issuedAtMs: 1600000, expiresAtMs: 1900000 },
+    "a retired header keeps its timing for the keep-alive"
+  );
   request(fakeJwt({ SessionId: "s-1", iat: 1900, exp: 2200 }));
   request(fakeJwt({ SessionId: "s-2", iat: 2000, exp: 2300 }));
   request(null);
+  // The next login: its first request is a boundary FROM no session. index.js keeps
+  // the code the login response set, and clears only when leaving a known session.
+  request(fakeJwt({ SessionId: "s-3", iat: 3000, exp: 3300 }));
   assert.deepStrictEqual(events, [
-    { auth: true, userBoundary: true },
-    { auth: true, userBoundary: false },
-    { auth: true, userBoundary: false },
-    { auth: false, userBoundary: false },
-    { auth: true, userBoundary: false },
-    { auth: true, userBoundary: true },
-    { auth: false, userBoundary: true },
+    { auth: true, userBoundary: true, previous: null },
+    { auth: true, userBoundary: false, previous: "s-1" },
+    { auth: true, userBoundary: false, previous: "s-1" },
+    { auth: false, userBoundary: false, previous: "s-1" },
+    { auth: true, userBoundary: false, previous: "s-1" },
+    { auth: true, userBoundary: true, previous: "s-1" },
+    { auth: false, userBoundary: true, previous: "s-2" },
+    { auth: true, userBoundary: true, previous: null },
   ]);
   unsubscribe();
   interceptor.allowAuthRetry();

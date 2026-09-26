@@ -46,9 +46,12 @@ router.onChange(path => {
 
 // Logout or another login is a user-state boundary: do not let a later account reuse
 // the previous one's in-memory plan or registration baseline. A token renewed within
-// the same session is not one; it happens every five minutes.
+// the same session is not one; it happens every five minutes. Only a boundary AWAY
+// from a known session clears the code: after a logout (already cleared) the next
+// login's first request is a boundary too, and clearing there wiped the code the
+// login response had just set.
 interceptor.onAuthChange((auth, info) => {
-  if (info && info.userBoundary) {
+  if (info && info.userBoundary && info.previousSessionId) {
     utils.setNeptunCode(null);
   }
 });

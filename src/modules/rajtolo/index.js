@@ -53,7 +53,7 @@ const meta = {
       id: "suggestions",
       name: "Órarendjavaslatok",
       description:
-        "„Javaslatok” gomb a Neptun Órarendtervezőjében: ütközésmentes kurzusválasztást keres a felvett órák mellé (kevesebb lyukas óra, több szabad nap vagy legkevesebb csere), előnézetben megmutatja a heti rácson, és kérésre átrendezi a Rajtoló sorrendjét. A Neptun saját tervezőjét nem módosítja.",
+        "„Javaslatok” gomb a Neptun Órarendtervezőjében: ütközésmentes kurzusválasztást keres a felvett órák mellé (kevesebb lyukas óra, több szabad nap vagy legkevesebb csere), előnézetben megmutatja a heti rácson, és kérésre átrendezi a Rajtoló sorrendjét. Megerősítés után a Neptun Tervezőjében is a javasolt kurzusokra cseréli a tervezetteket.",
       defaultEnabled: true,
     },
   ],

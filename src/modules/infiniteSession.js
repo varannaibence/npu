@@ -13,7 +13,7 @@
 // session still expires.
 const interceptor = require("../interceptor");
 const router = require("../router");
-const { ROUTE } = require("./rajtolo/constants");
+const { ROUTE, KEEPALIVE_AGE_MS } = require("./rajtolo/constants");
 const { freshenAuth } = require("./rajtolo/net");
 
 // A hidden tab runs this once a minute, so this lands 12.5-13.5 minutes into the
@@ -29,17 +29,27 @@ const meta = {
   group: "comfort",
   name: "Munkamenet életben tartása",
   description:
-    "A tárgyfelvételi oldalon tétlen fülnél is megakadályozza a kiléptetést: 12,5 perc tétlenség után megnyomja a Neptun saját Tárgy keresése gombját. Más oldalon a munkamenet lejárhat.",
+    "A tárgyfelvételi oldalon tétlen fülnél is megakadályozza a kiléptetést: mielőtt a munkamenet lejárna (12,5 perc tétlenség, vagy 10 perce nem frissült token után), megnyomja a Neptun saját Tárgy keresése gombját. Más oldalon a munkamenet lejárhat.",
   defaultEnabled: false,
 };
 
-// Pure. Press only when the page has been quiet long enough that Neptun is about to
-// log out anyway, and not again right after a press that brought nothing.
-function keepAliveDue(nowMs, lastPageRequestAt, lastAttemptAt) {
-  if (typeof lastPageRequestAt !== "number" || nowMs - lastPageRequestAt < QUIET_BEFORE_PRESS_MS) {
+// Pure. Press when Neptun is about to log out: the page has been quiet for 12.5
+// minutes, or the last renewal is 10 minutes old and the token has run out - the
+// session cookie lasts 15 minutes from a RENEWAL, which may predate the last request
+// (constants.js), so quiet time alone presses too late about half the time. Not
+// again right after a press that brought nothing.
+function keepAliveDue(nowMs, lastPageRequestAt, lastAttemptAt, timing) {
+  if (typeof lastAttemptAt === "number" && nowMs - lastAttemptAt < RETRY_MS) {
     return false;
   }
-  return typeof lastAttemptAt !== "number" || nowMs - lastAttemptAt >= RETRY_MS;
+  const quiet = typeof lastPageRequestAt === "number" && nowMs - lastPageRequestAt >= QUIET_BEFORE_PRESS_MS;
+  const stale =
+    Boolean(timing) &&
+    typeof timing.issuedAtMs === "number" &&
+    typeof timing.expiresAtMs === "number" &&
+    timing.expiresAtMs <= nowMs &&
+    nowMs - timing.issuedAtMs >= KEEPALIVE_AGE_MS;
+  return quiet || stale;
 }
 
 function shouldActivate() {
@@ -50,7 +60,10 @@ function initialize() {
   let lastAttemptAt = null;
   setInterval(() => {
     const now = Date.now();
-    if (router.getPath() !== ROUTE || !keepAliveDue(now, interceptor.getLastPageRequestAt(), lastAttemptAt)) {
+    if (
+      router.getPath() !== ROUTE ||
+      !keepAliveDue(now, interceptor.getLastPageRequestAt(), lastAttemptAt, interceptor.getAuthTiming())
+    ) {
       return;
     }
     lastAttemptAt = now;

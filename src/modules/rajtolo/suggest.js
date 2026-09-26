@@ -1,8 +1,10 @@
 // "Órarendjavaslatok": timetable suggestions inside Neptun's own "Órarendtervező"
 // panel. The student's held courses stay fixed; every course group they chose - in
 // the Rajtoló plan or in Neptun's planner - is re-picked by timetableSolver under
-// three strategies, previewed as ghost cards on the planner's own week grid, and
-// applied to the Rajtoló plan only. Neptun's own planner is never written.
+// three strategies and previewed as ghost cards on the planner's own week grid. Apply
+// reorders the Rajtoló's own groups and, after the student confirms the exact list,
+// moves the planned courses in Neptun's planner with the calls its "Tervezőhöz adás"
+// switch makes (docs/API.md).
 //
 // The grid is FullCalendar (docs/QOL.md §6, measured): columns carry `data-date`,
 // 30-minute lanes carry `data-time`. Week changes rebuild the columns, so the ghost
@@ -18,6 +20,7 @@ const plan = require("./plan");
 const { liveGet, liveSchedule, liveUnschedule, freshenAuth } = require("./net");
 const { STATUS_KEY } = require("./constants");
 const modal = require("../../modal");
+const { showToast } = require("../../toast");
 const ui = require("./ui");
 
 const BUTTON_ID = "npu-suggest-button";
@@ -45,22 +48,29 @@ const STRATEGY_LABELS = {
 // keeping it stays one of the options. A subject without the ids a course lookup
 // needs is left out.
 function planTargets(currentPlan, baseline) {
-  const held = new Map();
-  const heldSubjects = new Map();
+  // Held courses by type id and, for rows without one, by type label - never by the
+  // subject alone, or a held lecture would pass for the held lab.
+  const heldById = new Map();
+  const heldByLabel = new Map();
   (baseline || []).forEach(item => {
     if (item && item.source === "registered" && item.course) {
-      const key = `${item.course.subjectId}|${item.course.comparationTypeId || item.course.typeId || ""}`;
-      held.set(key, held.get(key) || item.course.id);
-      heldSubjects.set(item.course.subjectId, heldSubjects.get(item.course.subjectId) || item.course.id);
+      const typeId = item.course.comparationTypeId || item.course.typeId;
+      if (typeId && !heldById.has(`${item.course.subjectId}|${typeId}`)) {
+        heldById.set(`${item.course.subjectId}|${typeId}`, item.course.id);
+      }
+      const label = `${item.course.subjectId}|${item.course.type || ""}`;
+      if (item.course.type && !heldByLabel.has(label)) {
+        heldByLabel.set(label, item.course.id);
+      }
     }
   });
-  const heldIn = (subjectId, typeId) =>
-    (typeId ? held.get(`${subjectId}|${typeId}`) : heldSubjects.get(subjectId)) || null;
+  const heldIn = (subjectId, typeId, type) =>
+    (typeId ? heldById.get(`${subjectId}|${typeId}`) : type ? heldByLabel.get(`${subjectId}|${type}`) : null) || null;
 
   const targets = new Map();
   ((currentPlan && currentPlan.subjects) || []).forEach(subject => {
     const groups = (subject.groups || [])
-      .filter(group => !heldIn(subject.subjectId, group.typeId))
+      .filter(group => !heldIn(subject.subjectId, group.typeId, group.type))
       .map(group => ({
         type: group.type,
         typeId: group.typeId || null,
@@ -75,7 +85,9 @@ function planTargets(currentPlan, baseline) {
   const sameType = (group, course) =>
     course.comparationTypeId ? group.typeId === course.comparationTypeId : !group.typeId && group.type === course.type;
   (baseline || []).forEach(item => {
-    if (!item || item.source !== "planned" || !item.course) {
+    // Only what the planner endpoint itself said: the per-subject list behind it is
+    // not re-read after a planner write, so it can still name a removed course.
+    if (!item || item.source !== "planned" || item.origin !== "planner" || !item.course) {
       return;
     }
     // What sits in Neptun's planner is remembered per group, so applying a suggestion
@@ -111,7 +123,7 @@ function planTargets(currentPlan, baseline) {
         type: item.course.type || "",
         typeId,
         ranking: [item.course.id],
-        swap: heldIn(record.subjectId, typeId),
+        swap: heldIn(record.subjectId, typeId, item.course.type),
         planned: [item.course.id],
       });
     }
@@ -155,6 +167,7 @@ function solverInput(targets, catalog, baseline) {
         record: target.record,
         type,
         swap: group.swap || null,
+        fromPlan: Boolean(target.fromPlan),
         current: ranked.length > 0 ? ranked[0].id : null,
         planned: (group.planned || []).slice(),
         courses: new Map(members.map(course => [course.id, course])),
@@ -180,12 +193,12 @@ function solverInput(targets, catalog, baseline) {
   return { input: { fixed, groups }, info };
 }
 
-// The variant written into the Rajtoló plan. A group already ranked keeps every
-// course it had: the pick moves to the top, then the ones that fit this variant in
-// the strategy's order, then the rest as they were. A group the plan lacks gets the
-// pick alone - a suggestion never ranks a course nobody chose. A swap is left alone:
-// the Rajtoló only applies for new courses, so a held course is changed in Neptun.
-// Immutable.
+// The variant written into the Rajtoló plan: only groups the plan already ranks. Each
+// keeps every course it had: the pick moves to the top, then the ones that fit this
+// variant in the strategy's order, then the rest as they were. A subject only in
+// Neptun's planner is never added - that would put it up for automatic registration
+// behind the student's back. A swap is left alone: the Rajtoló only applies for new
+// courses, so a held course is changed in Neptun. Immutable.
 function applyVariant(currentPlan, variant, strategy, info) {
   let next = currentPlan;
   variant.picks.forEach(pick => {
@@ -197,7 +210,6 @@ function applyVariant(currentPlan, variant, strategy, info) {
     const subject = next.subjects.find(s => s.subjectId === meta.record.subjectId);
     const group = subject && subject.groups.find(g => plan.sameCourseGroup(g, course));
     if (!group) {
-      next = plan.toggleCourseInPlan(next, meta.record, course);
       return;
     }
     const order = (pick.rankings && pick.rankings[strategy]) || [pick.courseId];
@@ -212,6 +224,44 @@ function applyVariant(currentPlan, variant, strategy, info) {
     });
   });
   return next;
+}
+
+// The rankings applyVariant would change, as they are now, so an undo restores just
+// those groups and leaves later edits of the plan alone. Pure.
+function touchedRankings(currentPlan, variant, info) {
+  const saved = [];
+  variant.picks.forEach(pick => {
+    const meta = info.get(pick.groupKey);
+    const course = pick.courseId && meta && meta.courses.get(pick.courseId);
+    const subject = course && !meta.swap && currentPlan.subjects.find(s => s.subjectId === meta.record.subjectId);
+    const group = subject && subject.groups.find(g => plan.sameCourseGroup(g, course));
+    if (group) {
+      saved.push({
+        subjectId: subject.subjectId,
+        type: group.type,
+        typeId: group.typeId,
+        ranking: group.ranking.slice(),
+      });
+    }
+  });
+  return saved;
+}
+
+// Puts saved rankings back into whichever of their groups still exist. Pure.
+function restoreRankings(currentPlan, saved) {
+  return saved.reduce((next, entry) => {
+    const subject = next.subjects.find(s => s.subjectId === entry.subjectId);
+    const group = subject && subject.groups.find(g => plan.sameCourseGroup(g, entry));
+    if (!group) {
+      return next;
+    }
+    const groups = subject.groups.map(g =>
+      g === group ? Object.assign({}, g, { ranking: entry.ranking.slice() }) : g
+    );
+    return Object.assign({}, next, {
+      subjects: next.subjects.map(s => (s === subject ? Object.assign({}, s, { groups }) : s)),
+    });
+  }, currentPlan);
 }
 
 // What applying a variant changes in Neptun's own planner: per group that has a
@@ -458,6 +508,8 @@ const view = {
   strategy: "gaps",
   undo: null,
   details: false,
+  stale: false,
+  partial: false,
   busy: false,
   needsReload: false,
   loading: false,
@@ -596,6 +648,7 @@ function renderPanel(state) {
     tab.className = "npu-sg-tab";
     tab.setAttribute("aria-pressed", String(strategy === view.strategy));
     tab.textContent = STRATEGY_LABELS[strategy];
+    tab.disabled = view.busy;
     tab.addEventListener("click", () => {
       view.strategy = strategy;
       renderPanel(state);
@@ -643,7 +696,9 @@ function renderPanel(state) {
   }
   const ops = variant && !isOptimal(variant) ? plannerOps(variant, view.info) : [];
   const rajtoloChanges = Boolean(variant) && !isOptimal(variant) && rajtoloAffected(variant);
-  if ((ops.length > 0 || rajtoloChanges) && !view.busy) {
+  // Offered once per computed suggestion: after an apply (or a failed one) the planner
+  // it was computed from is gone, so only a recompute may offer it again.
+  if ((ops.length > 0 || rajtoloChanges) && !view.busy && !view.stale && !view.partial) {
     const apply = smallAction(ops.length > 0 ? "Alkalmazás…" : "Alkalmazás a Rajtolóba", true);
     apply.disabled = state.running;
     apply.title = state.running
@@ -681,9 +736,13 @@ function renderPanel(state) {
   }
   const refresh = smallAction("↻", false, "Újraszámolás");
   refresh.disabled = view.loading || view.busy;
+  if (view.stale && !view.busy) {
+    refresh.classList.add("npu-sg-primary");
+  }
   refresh.addEventListener("click", () => compute(state));
   actions.appendChild(refresh);
   const close = smallAction("✕", false, "Javaslatok bezárása");
+  close.disabled = view.busy;
   close.addEventListener("click", closePanel);
   actions.appendChild(close);
   bar.appendChild(actions);
@@ -696,18 +755,28 @@ function renderPanel(state) {
 }
 
 // Whether the Rajtoló plan would change: a changed pick outside a swap.
+// Whether the Rajtoló plan would change: a changed pick in a group it already ranks.
 function rajtoloAffected(variant) {
   return variant.picks.some(pick => {
     const meta = view.info.get(pick.groupKey);
-    return pick.changed && pick.courseId && meta && !meta.swap;
+    return pick.changed && pick.courseId && meta && meta.fromPlan && !meta.swap;
   });
 }
 
 function applyToRajtolo(state, variant) {
-  view.undo = { plan: state.plan, steps: [] };
+  if (view.busy || view.stale) {
+    return;
+  }
+  view.undo = {
+    code: utils.getNeptunCode(),
+    termId: state.plan.termId,
+    saved: touchedRankings(state.plan, variant, view.info),
+    steps: [],
+  };
   state.plan = applyVariant(state.plan, variant, view.strategy, view.info);
   ui.persistPlan(state);
   ui.render(state);
+  view.stale = true;
   setStatus(state, "A Rajtoló sorrendje frissült.");
 }
 
@@ -783,74 +852,103 @@ function runSteps(steps) {
     .then(failure => ({ done, failure }));
 }
 
-// Whether the planner, read back from Neptun, shows what the steps did.
-function plannerMatches(done) {
+// Whether the planner, read back from Neptun, is in the state after the steps
+// (`applied`) or before them. Only the planner endpoint's own rows count.
+function plannerMatches(steps, applied) {
   const planned = new Set(
     registrationData
       .getSnapshot()
-      .baseline.filter(item => item.source === "planned" && item.course)
+      .baseline.filter(item => item.source === "planned" && item.origin === "planner" && item.course)
       .map(item => item.course.id)
   );
-  return done.every(step => (step.kind === "add" ? planned.has(step.courseId) : !planned.has(step.courseId)));
+  return steps.every(step => planned.has(step.courseId) === ((step.kind === "add") === applied));
 }
 
-// All or nothing: a refused step rolls back the ones before it.
+// All or nothing: a refused step rolls back the ones before it. Everything the run
+// needs is taken now, so closing the panel or switching strategy meanwhile changes
+// nothing; the result is read back from Neptun whichever way it went.
 function runApply(state, variant, ops, rajtoloChanges) {
+  if (view.busy || view.stale) {
+    return;
+  }
+  const info = view.info;
+  const strategy = view.strategy;
+  const generation = view.generation;
+  const code = utils.getNeptunCode();
+  const termId = state.plan.termId;
+  const steps = plannerSteps(ops);
+  const report = text => {
+    if (generation === view.generation) {
+      view.busy = false;
+      view.needsReload = true;
+      setStatus(state, text);
+    } else {
+      showToast(text, "info");
+    }
+  };
   view.busy = true;
+  view.stale = true;
   setStatus(state, "A Tervező módosítása…");
   ensureAuth()
     .then(ok => {
       if (!ok) {
         view.busy = false;
+        view.stale = false;
         setStatus(state, "A Neptun nem adott friss munkamenetet; kattints valahova a Neptunban, majd próbáld újra.");
         return undefined;
       }
-      return runSteps(plannerSteps(ops)).then(({ done, failure }) => {
+      return runSteps(steps).then(({ done, failure }) => {
         if (failure) {
-          return runSteps(inverseSteps(done)).then(rollback => {
-            view.busy = false;
-            view.needsReload = done.length > 0;
-            setStatus(
-              state,
-              rollback.failure
-                ? `A Tervező módosítása megszakadt (${failure.message}), és a visszaállítás sem sikerült teljesen; nézd meg a Tervezőt.`
-                : `A Tervező nem módosult: ${failure.message}`
+          // The refused step may still have happened (a timeout says nothing), so the
+          // verdict comes from the planner read back, not from the answers.
+          const attempted = done.concat(failure.step);
+          return runSteps(inverseSteps(done))
+            .then(() => registrationData.refreshPlanner())
+            .then(() =>
+              report(
+                plannerMatches(attempted, false)
+                  ? `A Tervező nem módosult: ${failure.message}`
+                  : `A Tervező módosítása megszakadt (${failure.message}), és a Tervező most eltér az eredetitől; nézd meg a Tervezőt.`
+              )
             );
-          });
         }
-        const previousPlan = state.plan;
-        if (rajtoloChanges) {
-          state.plan = applyVariant(state.plan, variant, view.strategy, view.info);
+        const saved = rajtoloChanges ? touchedRankings(state.plan, variant, info) : [];
+        if (rajtoloChanges && utils.getNeptunCode() === code && state.plan.termId === termId) {
+          state.plan = applyVariant(state.plan, variant, strategy, info);
           ui.persistPlan(state);
           ui.render(state);
         }
-        view.undo = { plan: rajtoloChanges ? previousPlan : null, steps: done };
-        return registrationData.refreshPlanner().then(() => {
-          view.busy = false;
-          view.needsReload = true;
-          setStatus(
-            state,
-            plannerMatches(done)
-              ? `A Tervező frissült${rajtoloChanges ? ", és a Rajtoló sorrendje is" : ""}. A rács az oldal újratöltése után mutatja.`
-              : "A Neptun elfogadta a módosítást, de a visszaolvasott Tervező eltér; nézd meg a Tervezőt."
+        if (generation === view.generation) {
+          view.undo = { code, termId, saved, steps: done };
+        }
+        return registrationData
+          .refreshPlanner()
+          .then(() =>
+            report(
+              plannerMatches(done, true)
+                ? `A Tervező frissült${rajtoloChanges ? ", és a Rajtoló sorrendje is" : ""}. A rács az oldal újratöltése után mutatja.`
+                : "A Neptun elfogadta a módosítást, de a visszaolvasott Tervező eltér; nézd meg a Tervezőt."
+            )
           );
-        });
       });
     })
-    .catch(() => {
-      view.busy = false;
-      setStatus(state, "A Tervező módosítása nem sikerült; nézd meg a Tervezőt.");
-    });
+    .catch(() => report("A Tervező módosítása nem sikerült; nézd meg a Tervezőt."));
 }
 
+// Undoes one apply, for the student and term it was made for: the rankings it touched
+// go back (later edits stay), and the planner steps are reversed and read back.
 function undoApply(state) {
   const undo = view.undo;
-  if (state.running || !undo) {
+  if (state.running || view.busy || !undo) {
     return;
   }
   view.undo = null;
-  if (undo.plan) {
-    state.plan = undo.plan;
+  if (undo.code !== utils.getNeptunCode() || undo.termId !== state.plan.termId) {
+    setStatus(state, "A visszavonás már nem érvényes: más felhasználó vagy félév van betöltve.");
+    return;
+  }
+  if (undo.saved.length > 0) {
+    state.plan = restoreRankings(state.plan, undo.saved);
     ui.persistPlan(state);
     ui.render(state);
   }
@@ -858,24 +956,32 @@ function undoApply(state) {
     setStatus(state, "Visszaállítva.");
     return;
   }
+  const generation = view.generation;
   view.busy = true;
   setStatus(state, "A Tervező visszaállítása…");
-  ensureAuth()
-    .then(ok => (ok ? runSteps(inverseSteps(undo.steps)) : { failure: { message: "nincs friss munkamenet" } }))
-    .then(({ failure }) => {
+  const finish = text => {
+    if (generation === view.generation) {
       view.busy = false;
       view.needsReload = true;
-      setStatus(
-        state,
-        failure
-          ? `A Tervező visszaállítása nem sikerült teljesen (${failure.message}); nézd meg a Tervezőt.`
-          : "Visszaállítva. A rács az oldal újratöltése után mutatja."
-      );
-    })
-    .catch(() => {
-      view.busy = false;
-      setStatus(state, "A Tervező visszaállítása nem sikerült; nézd meg a Tervezőt.");
-    });
+      setStatus(state, text);
+    } else {
+      showToast(text, "info");
+    }
+  };
+  ensureAuth()
+    .then(ok => (ok ? runSteps(inverseSteps(undo.steps)) : { failure: { message: "nincs friss munkamenet" } }))
+    .then(({ failure }) =>
+      registrationData
+        .refreshPlanner()
+        .then(() =>
+          finish(
+            !failure && plannerMatches(undo.steps, false)
+              ? "Visszaállítva. A rács az oldal újratöltése után mutatja."
+              : `A Tervező visszaállítása nem sikerült teljesen${failure ? ` (${failure.message})` : ""}; nézd meg a Tervezőt.`
+          )
+        )
+    )
+    .catch(() => finish("A Tervező visszaállítása nem sikerült; nézd meg a Tervezőt."));
 }
 
 const DAY_SHORT = ["V", "H", "K", "Sze", "Cs", "P", "Szo"];
@@ -1029,6 +1135,9 @@ function closePanel() {
   view.info = null;
   view.undo = null;
   view.loading = false;
+  view.busy = false;
+  view.stale = false;
+  view.partial = false;
   view.status = "";
   const panel = document.getElementById(PANEL_ID);
   if (panel) {
@@ -1050,6 +1159,8 @@ function compute(state) {
   view.loading = true;
   view.result = null;
   view.info = null;
+  view.stale = false;
+  view.partial = false;
   setStatus(state, "A Tervező frissítése…");
   const auth = ensureAuth();
   auth
@@ -1090,15 +1201,18 @@ function compute(state) {
                 return undefined;
               }
               setStatus(state, `Kurzusok betöltése… (${index + 1}/${targets.length})`);
-              return liveGet(target.record).then(json => {
-                const courses = plan.collectCourses(json).get(target.record.subjectId);
-                if (courses && courses.size > 0) {
-                  catalog.set(target.record.subjectId, courses);
-                } else {
-                  failed.push(target.record.title || target.record.code || "egy tárgy");
-                }
-                return new Promise(resolve => setTimeout(resolve, LOAD_GAP_MS));
-              });
+              // Renewed per subject: a long list can outlast a 5-minute token.
+              return ensureAuth()
+                .then(ok => (ok ? liveGet(target.record) : null))
+                .then(json => {
+                  const courses = plan.collectCourses(json).get(target.record.subjectId);
+                  if (courses && courses.size > 0) {
+                    catalog.set(target.record.subjectId, courses);
+                  } else {
+                    failed.push(target.record.title || target.record.code || "egy tárgy");
+                  }
+                  return new Promise(resolve => setTimeout(resolve, LOAD_GAP_MS));
+                });
             }),
           Promise.resolve()
         )
@@ -1111,7 +1225,12 @@ function compute(state) {
           view.loading = false;
           view.info = info;
           view.result = result.variants.length > 0 ? result : null;
-          const failure = failed.length > 0 ? `Nem sikerült betölteni: ${failed.join(", ")}.` : "";
+          // A subject that did not load is missing from the week, so a suggestion
+          // could clash with it: shown, never applied.
+          view.partial = failed.length > 0;
+          const failure = view.partial
+            ? `Nem sikerült betölteni: ${failed.join(", ")}; alkalmazni csak ↻ után lehet.`
+            : "";
           view.status = view.result ? failure : `Nincs mit átrendezni. ${failure}`.trim();
           renderPanel(state);
         })
@@ -1175,6 +1294,9 @@ function mount(state) {
     utils.setButtonLabel(launcher, "Javaslatok");
     utils.markNpu(launcher, "Ütközésmentes órarendjavaslatok");
     launcher.addEventListener("click", () => {
+      if (view.busy) {
+        return;
+      }
       if (document.getElementById(PANEL_ID)) {
         closePanel();
       } else {
@@ -1183,7 +1305,7 @@ function mount(state) {
     });
     today.parentElement.insertBefore(launcher, today);
   }
-  if (view.result || view.loading) {
+  if (view.result || view.loading || view.busy) {
     if (!document.getElementById(PANEL_ID)) {
       // Angular dropped the panel with the planner; the preview goes with it.
       closePanel();
@@ -1202,6 +1324,8 @@ module.exports = {
   weekdayOf,
   pickStatus,
   plannerOps,
+  touchedRankings,
+  restoreRankings,
   plannerSteps,
   inverseSteps,
   plannerAnswer,

@@ -261,13 +261,15 @@ function buildBaseline(subjects, courses, plannerEntries) {
   const byCourse = new Map();
   const unknownSubject = { title: "", code: "" };
 
-  function consider(courseId, source, course, subject) {
+  // `origin` says which source it was: a view that acts on the planner trusts only
+  // "planner", since the per-subject list is not re-read after a planner write.
+  function consider(courseId, source, course, subject, origin) {
     if (!courseId || !source || !course) {
       return;
     }
     const existing = byCourse.get(courseId);
     if (!existing || SOURCE_RANK[source] > SOURCE_RANK[existing.source]) {
-      byCourse.set(courseId, { course, subject: subject || unknownSubject, source });
+      byCourse.set(courseId, { course, subject: subject || unknownSubject, source, origin });
     }
   }
 
@@ -275,7 +277,7 @@ function buildBaseline(subjects, courses, plannerEntries) {
   // it (courseConflictHints' strongest available signal).
   courses.forEach(course => {
     if (course.isSigned) {
-      consider(course.id, "registered", course, subjects.get(course.subjectId));
+      consider(course.id, "registered", course, subjects.get(course.subjectId), "course");
     }
   });
 
@@ -311,7 +313,7 @@ function buildBaseline(subjects, courses, plannerEntries) {
       curriculumTemplateId: entry.curriculumTemplateId,
       curriculumTemplateLineId: entry.curriculumTemplateLineId,
     };
-    consider(entry.id, entry.source, course, subject);
+    consider(entry.id, entry.source, course, subject, "planner");
   });
 
   // 3) Neptun's own native per-subject plan. Kept as a last resort exactly because
@@ -323,7 +325,7 @@ function buildBaseline(subjects, courses, plannerEntries) {
       if (!course) {
         return;
       }
-      consider(courseId, subject.source, course, subject);
+      consider(courseId, subject.source, course, subject, "subject");
     });
   });
 

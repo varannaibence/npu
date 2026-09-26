@@ -137,9 +137,24 @@ function liveDelay(seconds) {
 // Makes Neptun renew its own token rather than calling GetNewTokens ourselves: its
 // search button sends a request, and with an expired token the page renews it first
 // (measured: GetNewTokens, then the search). True once a new header shows up.
+// Single-flight: the Rajtoló's keep-alive, its pre-start check, the suggestion panel
+// and infiniteSession may all ask at once, and two presses could race two renewals
+// on one refresh cookie. Every caller shares the press already in flight.
+let pendingFreshen = null;
 function freshenAuth() {
+  if (!pendingFreshen) {
+    const settle = ok => {
+      pendingFreshen = null;
+      return ok;
+    };
+    pendingFreshen = pressForRenewal().then(settle, () => settle(false));
+  }
+  return pendingFreshen;
+}
+
+function pressForRenewal() {
   return new Promise(resolve => {
-    const button = document.getElementById(FILTER_BUTTON_ID);
+    const button = typeof document !== "undefined" && document.getElementById(FILTER_BUTTON_ID);
     if (!button || button.disabled) {
       resolve(false);
       return;

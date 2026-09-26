@@ -78,12 +78,17 @@ function setAuthHeader(value, metadata, force) {
   }
   lastAuthHeader = next;
   const claims = readAuthClaims(next);
+  const previousSessionId = authSessionId;
   const userBoundary = isUserBoundary(authSessionId, next, claims.sessionId, metadata && metadata.status);
   if (next || userBoundary) {
     authSessionId = claims.sessionId;
   }
-  authTiming = { issuedAtMs: claims.issuedAtMs, expiresAtMs: claims.expiresAtMs };
-  const info = Object.assign({}, metadata, { userBoundary });
+  // A retired header keeps its timing: the keep-alive still has to know how old the
+  // session's last renewal is after a 401 took the header away.
+  if (next) {
+    authTiming = { issuedAtMs: claims.issuedAtMs, expiresAtMs: claims.expiresAtMs };
+  }
+  const info = Object.assign({}, metadata, { userBoundary, previousSessionId });
   authHandlers.slice().forEach(handler => {
     try {
       handler(next, info);

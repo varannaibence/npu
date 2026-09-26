@@ -18,12 +18,14 @@ const baseline = [
   },
   {
     source: "planned",
+    origin: "planner",
     course: course("s3lab", "S3", "LAB", "Labor", [slot(3, "08:00", "10:00")]),
     subject: Object.assign({ title: "Három" }, ids),
   },
-  { source: "planned", course: course("s4x", "S4", "LAB", "Labor", []), subject: { title: "Négy" } },
+  { source: "planned", origin: "planner", course: course("s4x", "S4", "LAB", "Labor", []), subject: { title: "Négy" } },
   {
     source: "planned",
+    origin: "planner",
     course: course("s2y", "S2", "GYAK", "Gyakorlat", []),
     subject: Object.assign({ title: "Kettő" }, ids),
   },
@@ -105,11 +107,7 @@ const applied = suggest.applyVariant(rajtoloPlan, variant, "gaps", info);
 assert.deepStrictEqual(applied.subjects[0].groups[1].ranking, ["s1g1", "s1g2"], "no course the student never ranked");
 assert.deepStrictEqual(applied.subjects[0].groups[0], rajtoloPlan.subjects[0].groups[0], "other groups untouched");
 assert.strictEqual(applied.subjects[1], rajtoloPlan.subjects[1], "a group left out stays as it was");
-assert.deepStrictEqual(
-  applied.subjects[2].groups.map(g => g.ranking),
-  [["s3b"]],
-  "a planner-only subject enters the Rajtoló with the pick"
-);
+assert.strictEqual(applied.subjects.length, 2, "a planner-only subject is never put up for automatic registration");
 assert.deepStrictEqual(rajtoloPlan.subjects[0].groups[1].ranking, ["s1g2", "s1g1"], "immutable");
 assert.ok(closest, "the solver ran on this input");
 assert.strictEqual(
@@ -166,7 +164,7 @@ assert.strictEqual(
   const plannedLab = course("labB", "S5", "LAB", "Labor", [slot(2, "12:00", "14:00")]);
   const swapBaseline = [
     { source: "registered", course: heldLab, subject: Object.assign({ title: "Öt" }, ids) },
-    { source: "planned", course: plannedLab, subject: Object.assign({ title: "Öt" }, ids) },
+    { source: "planned", origin: "planner", course: plannedLab, subject: Object.assign({ title: "Öt" }, ids) },
   ];
   const swapTargets = suggest.planTargets({ termId: "t", subjects: [] }, swapBaseline);
   assert.deepStrictEqual(
@@ -282,7 +280,7 @@ assert.deepStrictEqual(suggest.plannerAnswer(null, "s"), { ok: false, message: "
 {
   const lab = course("pl", "S1", "GYAK", "Gyakorlat", []);
   const withPlanner = suggest.planTargets(rajtoloPlan, [
-    { source: "planned", course: lab, subject: Object.assign({ title: "Egy" }, ids) },
+    { source: "planned", origin: "planner", course: lab, subject: Object.assign({ title: "Egy" }, ids) },
   ]);
   assert.deepStrictEqual(withPlanner[0].groups[1].planned, ["pl"]);
   assert.deepStrictEqual(withPlanner[0].groups[1].ranking, ["s1g2", "s1g1"], "the Rajtoló ranking stays its own");

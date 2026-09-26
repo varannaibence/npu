@@ -428,6 +428,19 @@ assert.strictEqual(infiniteSession.refresh, undefined, "no GetNewTokens of our o
   assert.strictEqual(infiniteSession.keepAliveDue(now, now - 13 * minute, null), true, "logout is near: press");
   assert.strictEqual(infiniteSession.keepAliveDue(now, now - 13 * minute, now - 30000), false, "not twice at once");
   assert.strictEqual(infiniteSession.keepAliveDue(now, null, null), false, "no page request seen yet");
+  // The cookie lasts 15 minutes from the last RENEWAL, which can predate the last
+  // request: an old, expired token presses even while the page is only 6 minutes quiet.
+  const old = { issuedAtMs: now - 11 * minute, expiresAtMs: now - 6 * minute };
+  assert.strictEqual(infiniteSession.keepAliveDue(now, now - 6 * minute, null, old), true, "renewal is 11 minutes old");
+  assert.strictEqual(
+    infiniteSession.keepAliveDue(now, now - 6 * minute, null, {
+      issuedAtMs: now - 4 * minute,
+      expiresAtMs: now + minute,
+    }),
+    false,
+    "a live token cannot be renewed by a press"
+  );
+  assert.strictEqual(infiniteSession.keepAliveDue(now, now - 6 * minute, now - 30000, old), false, "not twice at once");
 }
 
 // --- paginationFixes: the row window is moved, not just capped ---
