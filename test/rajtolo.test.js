@@ -779,3 +779,36 @@ const falseRepetitionConflict = rajtolo.findPlanConflicts([
 assert.strictEqual(falseRepetitionConflict.length, 1, "a repetition:false slot must still be reported as a clash");
 
 module.exports = { run: runEngineChecks };
+
+// A SchedulableSubjects row without termId (issue #5, ME's Neptun) left the record
+// unsaveable: every Rajtoló switch press ended in "A Rajtoló terve nem menthető".
+// The GetSubjectsCourses request URL the app just sent fills the missing ids in.
+{
+  const rows = require("../src/modules/rajtolo/rows");
+  const previousLocation = global.location;
+  global.location = { origin: "https://neptun.test" };
+  try {
+    const state = {
+      subjectCatalog: rajtolo.collectSubjects({ data: [{ id: "s-me", title: "Matek", code: "ME1" }] }),
+    };
+    rows.rememberSubjectFromUrl(
+      state,
+      "/hallgato_ng/api/SubjectApplication/GetSubjectsCourses?subjectId=s-me&termId=t-1&curriculumTemplateId=c-1&curriculumTemplateLineId=l-1"
+    );
+    const record = state.subjectCatalog.get("s-me");
+    assert.strictEqual(record.termId, "t-1", "a missing termId is taken from the request URL");
+    assert.strictEqual(record.curriculumTemplateLineId, "l-1", "so are the other ids SubjectSignin needs");
+    assert.strictEqual(record.title, "Matek", "the rest of the known record is kept");
+    const urlPlan = rajtolo.toggleCourseInPlan(rajtolo.emptyPlan(null), record, { id: "k-1", type: "Gyakorlat" });
+    assert.strictEqual(urlPlan.termId, "t-1", "the plan now has a term to be saved under");
+
+    rows.rememberSubjectFromUrl(state, "/x?subjectId=s-me&termId=t-other");
+    assert.strictEqual(state.subjectCatalog.get("s-me").termId, "t-1", "a known termId is never overwritten");
+  } finally {
+    if (typeof previousLocation === "undefined") {
+      delete global.location;
+    } else {
+      global.location = previousLocation;
+    }
+  }
+}
