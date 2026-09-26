@@ -112,6 +112,8 @@ function collectCourses(json, into) {
       isFull: typeof row.isFull === "boolean" ? row.isFull : null,
       isSigned: typeof row.isSigned === "boolean" ? row.isSigned : null,
       isOnWaitingList: typeof row.isOnWaitingList === "boolean" ? row.isOnWaitingList : null,
+      // A forecast for a new application, never the student's own status (invariant 5).
+      willBeOnWaitingList: typeof row.willBeOnWaitingList === "boolean" ? row.willBeOnWaitingList : null,
       isRankingCourse: typeof row.isRankingCourse === "boolean" ? row.isRankingCourse : null,
       slots: courseSlots(row),
     });
@@ -401,6 +403,7 @@ module.exports = {
   removeSubject,
   pruneGroups,
   toggleCourseInPlan,
+  sameCourseGroup,
   isCourseInPlan,
   moveUp,
   moveDown,

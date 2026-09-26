@@ -140,7 +140,7 @@ assert.strictEqual(
 // 4) no clash, complete baseline: the only path that may say "ok"
 const okVerdict = view.conflictVerdict(candidate, [clearEntry], true);
 assert.strictEqual(okVerdict.state, "ok");
-assert.strictEqual(okVerdict.label, "✓");
+assert.strictEqual(okVerdict.label, "Nincs ütközés");
 
 // a course never conflicts with an entry that IS itself
 const selfEntry = { course: { id: "cand", slots: [slot(1, 600, 720)] }, subject: {} };

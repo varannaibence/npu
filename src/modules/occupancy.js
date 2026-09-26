@@ -412,6 +412,7 @@ function buildToggle(referenceButton, enabled) {
   const toggle = utils.cloneButton(referenceButton);
   toggle.id = TOGGLE_ID;
   utils.setButtonLabel(toggle, TOGGLE_LABEL);
+  utils.markNpu(toggle, "A betelt kurzusok a lista végére kerülnek");
   paintToggle(toggle, enabled);
   return toggle;
 }

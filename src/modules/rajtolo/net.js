@@ -4,6 +4,8 @@ const {
   API_BASE,
   COURSES_ENDPOINT,
   SIGNIN_ENDPOINT,
+  SCHEDULE_ENDPOINT,
+  UNSCHEDULE_ENDPOINT,
   PERIODS_ENDPOINT,
   REQUEST_TIMEOUT_MS,
   DEFAULT_DELAY_SECONDS,
@@ -91,6 +93,26 @@ function livePost(subject, courseIds) {
   });
 }
 
+// Neptun's own planner, the same two calls its "Tervezőhöz adás" switch makes. Only
+// the suggestion panel uses them, after the student confirms the list of changes.
+function liveSchedule(subject, courseId) {
+  return httpRequest("POST", `${API_BASE}${SCHEDULE_ENDPOINT}`, {
+    subjectId: subject.subjectId,
+    termId: subject.termId,
+    curriculumTemplateId: subject.curriculumTemplateId,
+    curriculumTemplateLineId: subject.curriculumTemplateLineId,
+    courseIds: [courseId],
+  });
+}
+
+function liveUnschedule(subject, courseId) {
+  return httpRequest("POST", `${API_BASE}${UNSCHEDULE_ENDPOINT}`, {
+    courseId,
+    subjectId: subject.subjectId,
+    termId: subject.termId,
+  });
+}
+
 // The one call made outside a run. Neptun knows the window's exact open/close
 // instants, so reading them beats letting the user type the time by hand and risk the
 // typo that costs a registration. termId must be the GUID form carried on a subject
@@ -138,4 +160,13 @@ function freshenAuth() {
   });
 }
 
-module.exports = { httpRequest, liveGet, livePost, liveGetPeriods, liveDelay, freshenAuth };
+module.exports = {
+  httpRequest,
+  liveGet,
+  livePost,
+  liveSchedule,
+  liveUnschedule,
+  liveGetPeriods,
+  liveDelay,
+  freshenAuth,
+};

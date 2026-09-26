@@ -31,8 +31,8 @@ const ACCENT_CLASSES = ["primary", "secondary", "tertiary", "error", "warning", 
 // reference at all.
 function referenceButton() {
   return (
-    document.querySelector("button.flat.primary:not(.header__main-menu)") ||
-    document.querySelector("button.flat:not(.header__main-menu)")
+    document.querySelector("button.flat.primary:not(.header__main-menu):not([data-npu-feature])") ||
+    document.querySelector("button.flat:not(.header__main-menu):not([data-npu-feature])")
   );
 }
 

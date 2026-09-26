@@ -313,6 +313,7 @@ function initialize() {
     // Only the caption: the filter's count badge and chevron mean nothing here.
     launcher.querySelectorAll("neptun-badge, .neptun-button__postfix-icon").forEach(node => node.remove());
     utils.setButtonLabel(launcher, "Átlagkalkulátor");
+    utils.markNpu(launcher, "Átlag- és kreditindex-kalkulátor");
     launcher.addEventListener("click", () => openCalculator(() => subjects));
     host.parentElement.insertBefore(launcher, host);
   }

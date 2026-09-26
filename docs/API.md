@@ -250,7 +250,16 @@ Mért kurzussor mezői: `subjectId`, `id` (kurzusazonosító), `type`, `typeIden
 - A `classInstanceInfos[]` alakja **pontosan azonos** a `GetSubjectsCourses`-éval: `{ startTime, endTime, dayOfWeek, dayOfWeekText, rooms, repetition }`. Az ott alkalmazott `normaliseSlot` változtatás nélkül ráhúzható.
 - A sor `termId` mezője **GUID** (`<term-guid>`), **nem** a kérés numerikus `request.termId` paramétere (ugyanaz a csapda, mint `SchedulableSubjects`-nél).
 - A `classInstanceTimeTableList[]` konkrét dátumokat ad (`substituteDate`, `fromTime`, `toTime`).
-  Ez ma kihasználatlan.
+  Ez ma kihasználatlan. Elemei: `{ classInstanceCourseId, courseTimeTableInformationId,
+  dayOfWeekText, substituteDate: "YYYY-MM-DDT00:00:00", fromTime/toTime: "YYYY-MM-DDTHH:MM:SS" }`,
+  alkalmanként egy elem. (Mérve 2026/27/1-ben, 13 tervezői sor alapján.)
+  - Minden mért sornál `repetition === true`, és a dátumok hete a `classInstanceInfos`
+    `dayOfWeek`/`startTime`/`endTime` hetét követi. A/B hetes (`repetition: false`)
+    kurzust nem láttunk, ezért annak jelentése ismeretlen.
+  - A dátumok közti 14 napos rés az őszi szünet hete. Ezt egyes kurzusok kihagyják,
+    mások nem, tehát a lista kurzusonként eltérhet.
+  - A csak vizsgakurzusos tárgynál (`GetSubjectsCourses`) mindkét lista üres. Az ilyen
+    kurzusnak nincs ismert időpontja, így ütközést sem jelent.
 
 #### Felvett / Tervezőben / Várólistán — [Mért, részben ismeretlen]
 
@@ -273,6 +282,37 @@ alakítja automatikusan felvett, tervezett vagy várólistás státusszá.
 - `willBeOnWaitingList`: **ELŐREJELZÉS** egy új jelentkezésre, nem aktuális állapot. A mért mintában három sor `willBeOnWaitingList: true` volt, miközben `isRegistered: true` — ezt soha nem szabad állapotnak használni.
 
 **Szükséges további mérés:** olyan mintában, ahol a hallgatónak van tervezőbe tett kurzusa és/vagy várólistás kurzusa, hogy az `isRegistered`, `scheduledSubjectId` / `scheduledCourseId`, illetve `isOnWaitingList` mezők tényleges értékei nyilvánvalóak legyenek. A kód csak az egyértelműen jelölt `isRegistered` vagy `isSigned` sorokat kezeli felvettként.
+
+### A Neptun Tervező írása („Tervezőhöz adás”) — [Mért, unideb, 2026-09-26]
+
+A natív „Tervezőhöz adás” kapcsoló ezt a két kérést küldi. Az NPU csak az
+Órarendjavaslatok megerősített alkalmazásakor hívja őket.
+
+```http
+POST /hallgato_ng/api/SubjectApplication/ScheduleSubjectAndCourses
+{ "subjectId": "<guid>", "termId": "<term-guid>", "curriculumTemplateId": "<guid>",
+  "curriculumTemplateLineId": "<guid>", "courseIds": ["<guid>"] }
+→ 200 { "data": { "scheduledSubjectId": "<guid>",
+                  "scheduledCourses": [{ "courseId": "<guid>", "scheduledCourseId": "<guid>" }] },
+        "notification": [] }
+
+POST /hallgato_ng/api/SubjectApplication/UnScheduleCourse
+{ "courseId": "<guid>", "subjectId": "<guid>", "termId": "<term-guid>" }
+→ 200 { "data": null, "notification": [] }
+```
+
+- A `termId` itt a GUID, nem a numerikus félév-azonosító.
+- Lejárt tokennél a kérés 401-et kap; a Neptun ekkor maga hív `GetNewTokens`-t, és
+  megismétli a kérést.
+- A Neptun a kapcsolás után **nem** kéri le újra a `GetScheduledCourses`-t, és a
+  Tervező bezárása-megnyitása vagy a „Tárgy keresése” sem. A rács a saját
+  memóriájából frissül, ezért egy kívülről írt változás csak az oldal újratöltése
+  után látszik rajta.
+- Az elutasító válasz (`notification[]` nem üres) alakja nem mért; az NPU minden
+  ilyet elutasításnak vesz, és az addigi lépéseket visszagörgeti.
+- Ismeretlen: mit tesz a `ScheduleSubjectAndCourses`, ha ugyanabból a típusból
+  már van tervezett kurzus. Az NPU ezért előbb levesz, aztán tesz fel, és
+  utána visszaolvassa a Tervezőt.
 
 ### `GET Periods/GetPeriods` — [Mért kérés és időpontmezők]
 

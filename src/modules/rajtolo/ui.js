@@ -49,7 +49,8 @@ function persistPlan(state) {
 function buildLauncher(referenceButton) {
   const launcher = utils.cloneButton(referenceButton);
   launcher.id = LAUNCHER_ID;
-  utils.setButtonLabel(launcher, "Rajtoló (NPU)");
+  utils.setButtonLabel(launcher, "Rajtoló");
+  utils.markNpu(launcher, "Ütemezett tárgyfelvétel");
   return launcher;
 }
 
@@ -727,6 +728,7 @@ function dialogQuery(state, selector) {
 
 module.exports = {
   buildLauncher,
+  persistPlan,
   openPlanner,
   render,
   loadPeriods,

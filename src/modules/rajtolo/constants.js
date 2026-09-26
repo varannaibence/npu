@@ -9,6 +9,10 @@ const PLANS_KEY = "rajtoloPlans";
 const SUBJECTS_ENDPOINT = "SubjectApplication/SchedulableSubjects";
 const COURSES_ENDPOINT = "SubjectApplication/GetSubjectsCourses";
 const SIGNIN_ENDPOINT = "SubjectApplication/SubjectSignin";
+// Neptun's own planner ("Tervezőhöz adás"), measured on unideb: add takes the four
+// subject ids and courseIds[], remove takes courseId, subjectId and termId (GUIDs).
+const SCHEDULE_ENDPOINT = "SubjectApplication/ScheduleSubjectAndCourses";
+const UNSCHEDULE_ENDPOINT = "SubjectApplication/UnScheduleCourse";
 // Not called by the app's own traffic on this page; this module originates it.
 const PERIODS_ENDPOINT = "Periods/GetPeriods";
 // The same response creditBreakdown rides for the header. It issues the GET; this
@@ -54,6 +58,8 @@ module.exports = {
   SUBJECTS_ENDPOINT,
   COURSES_ENDPOINT,
   SIGNIN_ENDPOINT,
+  SCHEDULE_ENDPOINT,
+  UNSCHEDULE_ENDPOINT,
   PERIODS_ENDPOINT,
   CREDITS_ENDPOINT,
   API_BASE,

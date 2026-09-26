@@ -240,6 +240,7 @@ function buildRowToggle(wrapper) {
     }
   });
   clone.style.marginLeft = "16px";
+  utils.markNpu(clone, "Rajtolóhoz adás");
   return clone;
 }
 
@@ -276,7 +277,7 @@ function paintRowToggle(toggle, selected) {
   if (icon) {
     icon.style.display = selected ? "" : "none";
   }
-  toggle.setAttribute("title", selected ? "Rajtolóhoz adva" : "Rajtolóhoz adás");
+  toggle.setAttribute("title", `${selected ? "Rajtolóhoz adva" : "Rajtolóhoz adás"} – NPU-funkció`);
   return true;
 }
 

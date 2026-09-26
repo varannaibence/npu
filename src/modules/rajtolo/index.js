@@ -24,6 +24,8 @@ const protocol = require("./protocol");
 const engine = require("./engine");
 const ui = require("./ui");
 const rows = require("./rows");
+const suggest = require("./suggest");
+const settings = require("../../settings");
 const { showToast } = require("../../toast");
 const registrationData = require("../../registrationData");
 
@@ -44,6 +46,15 @@ const meta = {
     {
       capability: "scheduledSubjects",
       to: "a kredit-előrejelzéshez",
+    },
+  ],
+  options: [
+    {
+      id: "suggestions",
+      name: "Órarendjavaslatok",
+      description:
+        "„Javaslatok” gomb a Neptun Órarendtervezőjében: ütközésmentes kurzusválasztást keres a felvett órák mellé (kevesebb lyukas óra, több szabad nap vagy legkevesebb csere), előnézetben megmutatja a heti rácson, és kérésre átrendezi a Rajtoló sorrendjét. A Neptun saját tervezőjét nem módosítja.",
+      defaultEnabled: true,
     },
   ],
 };
@@ -399,12 +410,20 @@ function onStartStop(state) {
 
 function initialize() {
   let scheduled = false;
+  const suggestions = settings.isOptionEnabled(
+    { meta },
+    meta.options.find(option => option.id === "suggestions"),
+    settings.readFlags()
+  );
   function tick() {
     scheduled = false;
     if (location.pathname !== ROUTE) {
       return;
     }
     mount();
+    if (suggestions && plannerState) {
+      suggest.mount(plannerState);
+    }
   }
   function scheduleTick() {
     if (scheduled) {
@@ -474,4 +493,8 @@ module.exports = {
   summarize: engine.summarize,
   submissionOutcome: protocol.submissionOutcome,
   createController: engine.createController,
+  planTargets: suggest.planTargets,
+  solverInput: suggest.solverInput,
+  applyVariant: suggest.applyVariant,
+  ghostBox: suggest.ghostBox,
 };

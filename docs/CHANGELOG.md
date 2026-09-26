@@ -40,6 +40,25 @@
 
 **Új**
 
+- Órarendjavaslatok: az Órarendtervező új **Javaslatok** gombja a felvett órák
+  mellé ütközésmentes kurzusválasztást keres a Rajtolóban és a Neptun
+  Tervezőjében kiválasztott csoportokhoz. Három változatot ad (kevesebb lyukas
+  óra, több szabad nap, legkevesebb csere), a heti rácson előnézetben mutatja,
+  és figyelmeztet a betelt, várólistás, rangsoros és időpont nélküli
+  kurzusokra. Az **Alkalmazás** előbb felsorolja a változásokat, majd a Neptun
+  Tervezőjében a javasolt kurzusokra cseréli a tervezetteket, és a Rajtoló
+  sorrendjét is átrendezi. Ha a Neptun egy lépést elutasít, az addigiakat
+  visszagörgeti; a panelen visszavonható. Ha egy már felvett kurzus típusából (például laborból)
+  teszel egy másikat a Tervezőbe, cserének veszi, és megmondja, megéri-e
+  cserélni. Ha a terved már a legjobb, ezt mondja, és nem ajánl átírást. A
+  javaslat egy keskeny sávban jelenik meg a naptár fölött, a részletek
+  lenyithatók. A számolás előtt mindig frissen újraolvassa a Tervezőt, lejárt
+  munkamenetnél pedig előbb a Neptunnal frissítteti.
+- Egységes jelölés: az NPU által az oldalra tett minden gomb és kapcsoló (a
+  Rajtoló, a „Rajtolóhoz” kapcsoló, a „Betelt kurzusok hátra”, az
+  Átlagkalkulátor és a Javaslatok) az NPU ikonjával és „NPU-funkció” súgóval
+  jelenik meg, hogy ne lehessen a Neptun sajátjával összekeverni. A Rajtoló
+  gombján ezért nincs már „(NPU)” felirat.
 - Mi van ma?: a kezdőlapon a „Tisztelt …!” köszöntés helyett, a Neptun saját
   kártyáival egyező három kártyán látszanak a mai órák teremmel (vagy a következő, ha ma nincs), a befizetési határidők és
   a futó vagy közelgő tárgyfelvételi időszakok. Ha egy befizetés vagy időszak 3

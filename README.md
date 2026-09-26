@@ -38,6 +38,9 @@ működik.
 Minden funkció egyenként kapcsolható a **Neptun PowerUp! beállítások**
 panelben; a módosítás a következő oldalbetöltéskor lép életbe.
 
+Az NPU által az oldalra tett gombokon és kapcsolókon az NPU kék ikonja látszik,
+fölé húzva pedig az „NPU-funkció” felirat. Ami nem ilyen, az a Neptun saját része.
+
 A **Ki** alapállapot szándékos döntés, nem félkész funkciót jelez. Ezek a
 modulok a Neptun megszokott elrendezését vagy munkafolyamatát változtatják meg,
 illetve extra hálózati kérést indítanak, ezért csak kifejezett bekapcsolás után
@@ -61,6 +64,7 @@ lépnek működésbe.
 | Funkció | Leírás | Alapállapot |
 | --- | --- | :---: |
 | Sorba rendezett tárgyfelvétel | Mentett tárgy- és kurzussorrend, a megadott időpontban soros beküldéssel. [Részletek](#a-rajtoló) | Külön indítható |
+| ↳ Órarendjavaslatok | **Javaslatok** gomb a Neptun Órarendtervezőjében: a felvett órák mellé ütközésmentes kurzusválasztást keres (kevesebb lyukas óra, több szabad nap vagy legkevesebb csere), a heti rácson előnézetben mutatja, és kérésre átrendezi a Rajtoló sorrendjét. | Be |
 
 ### Mindennapok
 
@@ -207,6 +211,21 @@ pedig a háttérben lévő fül címe **✔ Rajtoló kész** lesz.
 
 A terv felhasználónként és félévenként a böngésződben tárolódik. A Neptun
 **Tervezőhöz adás** kapcsolója ettől független funkció.
+
+Az Órarendtervező **Javaslatok** gombja a Rajtolóban és a Neptun Tervezőjében
+kiválasztott kurzuscsoportokhoz keres ütközésmentes kombinációt a már felvett
+órák mellé. Három változatot kínál: kevesebb lyukas óra, több szabad nap, vagy
+a lehető legkevesebb csere. A kiválasztott változat szaggatott keretes
+kártyákként jelenik meg a heti rácson; ha a terved már a legjobb, ezt mondja
+ki, és nem ajánl módosítást. Az **Alkalmazás** előbb felsorolja, mi változik:
+a Neptun Tervezőjében lévő kurzusokat a javasoltakra cseréli (a szerveren, a
+Neptun saját kéréseivel), a Rajtoló sorrendjét pedig átrendezi. Ha egy lépést
+a Neptun elutasít, az addigiakat visszagörgeti; a panelen visszavonható. A
+rács a frissült Tervezőt az oldal újratöltése után mutatja. Ha egy már felvett kurzus típusából (például laborból) egy másikat
+teszel a Tervezőbe, azt cserének veszi, és megmutatja, megéri-e cserélni; a
+cserét magát a Neptunban végezheted el. „Nincs ismert ütközés” azt jelenti, hogy
+az ismert időpontok között nincs átfedés: az időpont nélküli kurzusokra külön
+figyelmeztet.
 
 > **Fontos:** a Rajtoló **nem** jelentkezik be helyetted, nem kér kétlépcsős kódot, nem
 > kerüli meg a CAPTCHA-t és nem hágja át az egyetem szabályait. A
