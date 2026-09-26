@@ -128,13 +128,23 @@ A legutóbbi három stabil kiadás. A **Telepítés** link Tampermonkey mellett
 közvetlenül telepíthető.
 
 <details open>
+<summary><strong>v3.0.4</strong> · 2026. szept. 26.</summary>
+
+- Frissítés jelzése: amikor a Tampermonkey frissíti az NPU-t, a következő
+  betöltéskor egy értesítés jelzi az új verziót, az „Újdonságok” linkkel. Csak
+  egyszer jelenik meg, első telepítéskor nem. A beállításokban kikapcsolható.
+- A frissítési és hibabejelentő linkek az új repócímre (`npu-uj-neptunhoz`)
+  mutatnak; eddig a régi cím átirányítása miatt működtek.
+
+[Release megnyitása](https://github.com/varannaibence/npu-uj-neptunhoz/releases/tag/v3.0.4) · [Telepítés](https://github.com/varannaibence/npu-uj-neptunhoz/releases/download/v3.0.4/npu.user.js)
+
+</details>
+<details>
 <summary><strong>v3.0.3</strong> · 2026. szept. 26.</summary>
 
-## What's Changed
-* [FIXED | Rajtoló nem működik az ME neptunján] - fill missing subject ids from the course request URL by @varannaibence in https://github.com/varannaibence/npu-uj-neptunhoz/pull/6
-
-
-**Full Changelog**: https://github.com/varannaibence/npu-uj-neptunhoz/compare/v3.0.2...v3.0.3
+- Rajtoló: javítva, hogy egyes egyetemek Neptunján (pl. ME) a kurzus Rajtolóhoz
+  adásakor „A Rajtoló terve nem menthető” hibát kaptál. A hiányzó félév-azonosítót
+  az NPU most a kurzuslista kéréséből pótolja.
 
 [Release megnyitása](https://github.com/varannaibence/npu-uj-neptunhoz/releases/tag/v3.0.3) · [Telepítés](https://github.com/varannaibence/npu-uj-neptunhoz/releases/download/v3.0.3/npu.user.js)
 
@@ -142,38 +152,15 @@ közvetlenül telepíthető.
 <details>
 <summary><strong>v3.0.2</strong> · 2026. szept. 23.</summary>
 
-Nincs külön kiadási megjegyzés.
+- A színtéma a fejléc jobb felső sarkában lévő üzenetszámlálót is átszínezi: a
+  menta helyett a választott szín világos árnyalatát kapja.
+- A Neptun halványkék felületei (kezdőlapi sáv, felhasználói gomb, kiemelések,
+  linkkék) is a választott színárnyalatot veszik fel, a saját világosságukat
+  megtartva. A férőhely-jelvények színei nem változnak.
+- Saját NPU-logó: a láblécben és a bejelentkező oldalon a felirat előtt, a
+  README fejlécében és a Tampermonkey-listában is.
 
 [Release megnyitása](https://github.com/varannaibence/npu-uj-neptunhoz/releases/tag/v3.0.2) · [Telepítés](https://github.com/varannaibence/npu-uj-neptunhoz/releases/download/v3.0.2/npu.user.js)
-
-</details>
-<details>
-<summary><strong>v3.0.1</strong> · 2026. szept. 23.</summary>
-
-**Megjelenés**
-
-- Színtéma: a Neptun kékje helyett választható kiemelőszín (8 előre beállított
-  árnyalat vagy tetszőleges egyéni szín). A fejléc és a lábléc ennek sötét
-  árnyalatát kapja. A beállításokban élőben látszik, a Mégse visszaállítja.
-- Átdolgozott beállításpanel: kapcsolók jelölőnégyzetek helyett, csoportonként
-  kártya, animált lenyitás.
-- Az NPU ablakainak címe már nem tapad a felső szélhez, és a gombjaik a
-  kezdőlapon is mind a négy sarkukon kerekek.
-
-**Tárgyfelvétel**
-
-- Időpont a megjegyzésből: ha egy kurzusnak nincs órarendi adata, de az oktató
-  a megjegyzésbe írta az időpontot (pl. „Hétfő 14-15, A1/216”), az NPU onnan
-  olvassa ki a napot, az időt és a termet. Kiírja a kurzus alá, és az
-  ütközésvizsgálat, valamint a Rajtoló is számol vele. Az órarendi ütközések
-  alopciójaként kikapcsolható.
-
-**Kiadás**
-
-- A kiadás verzióját a tag adja; a GitHub felületén létrehozott release elég,
-  a `package.json` utána automatikusan igazodik.
-
-[Release megnyitása](https://github.com/varannaibence/npu-uj-neptunhoz/releases/tag/v3.0.1) · [Telepítés](https://github.com/varannaibence/npu-uj-neptunhoz/releases/download/v3.0.1/npu.user.js)
 
 </details>
 

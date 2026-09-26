@@ -2,6 +2,8 @@
 
 ## Következő kiadás
 
+## 3.0.4 — 2026. szept. 26.
+
 - Frissítés jelzése: amikor a Tampermonkey frissíti az NPU-t, a következő
   betöltéskor egy értesítés jelzi az új verziót, az „Újdonságok” linkkel. Csak
   egyszer jelenik meg, első telepítéskor nem. A beállításokban kikapcsolható.
