@@ -146,7 +146,7 @@ sokkal bővebb; az alábbiak eddig kihasználatlanok voltak:
 | Mező                                                                                 | Mit ad                                                                | Állapot                        |
 | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------- | ------------------------------ |
 | `isSigned`                                                                           | **igaz pontosan azokra a kurzusokra, amelyeket a hallgató felvett**   | használjuk (ütközés-alapvonal) |
-| `isOnWaitingList`                                                                    | a hallgató várólistán van-e ezen a kurzuson                           | kihasználatlan                 |
+| `isOnWaitingList`                                                                    | a hallgató várólistán van-e ezen a kurzuson                           | használjuk (Rajtoló-eredmény)  |
 | `comparationTypeId`                                                                  | a kurzustípus GUID-ja (Labor és Elmélet külön érték)                  | használjuk (csoportkulcs)      |
 | `room`                                                                               | kurzusszintű terem, a `classInstanceInfos[].rooms` mellett            | használjuk                     |
 | `note`                                                                               | „Megjegyzés”; üres órarendnél ebből olvassuk ki a napot, időt, termet | használjuk (órarend-tartalék)  |

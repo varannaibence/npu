@@ -945,12 +945,16 @@ function applyFiltersAndSort(section, state) {
   }
   section.emptyRow.hidden = filtered.length > 0;
 
-  const current = Array.from(section.tbody.children).filter(node => node !== section.emptyRow);
-  const unchanged = current.length >= target.length && target.every((node, i) => node === current[i]);
+  // Compared against the VISIBLE rows only. Hidden rows stay where they are, so with a
+  // filter on, comparing against every row never matched and each repaint re-appended
+  // the visible rows, moving the real controls inside them and the focus with them.
+  const shown = new Set(target);
+  const current = Array.from(section.tbody.children).filter(node => shown.has(node));
+  const unchanged = current.length === target.length && target.every((node, i) => node === current[i]);
   if (!unchanged) {
     target.forEach(node => section.tbody.appendChild(node));
   }
-  if (section.emptyRow.previousSibling !== target[target.length - 1]) {
+  if (section.tbody.lastElementChild !== section.emptyRow) {
     section.tbody.appendChild(section.emptyRow);
   }
 }
@@ -1505,6 +1509,7 @@ module.exports = {
   isConflictFree,
   hasFreeSeat,
   filterRows,
+  applyFiltersAndSort,
   seatCountText,
   seatState,
   freeSeatFromCourse,

@@ -178,7 +178,14 @@ sorrendben küldi be a jelentkezéseket.
 3. Nyisd meg a Rajtolót a szűrő melletti gombbal: rendezd sorba a tárgyakat és
    kurzusokat, válaszd ki a nyitás időpontját a Neptun saját tárgyfelvételi
    időszakaiból, és nézd át az ütközéseket és a kredit-előrejelzést.
-4. Indítsd el, és kövesd az eredményeket.
+4. Indítsd el, és kövesd az eredményeket. Minden beküldés után a Rajtoló egyszer
+   újra lekéri a tárgy kurzuslistáját: ha a Neptun szerint minden beküldött
+   kurzusod felvett, **Felvéve**, ha valamelyiken várólistán vagy, **Várólistára
+   került** jelzést kapsz. Ha ez nem dönthető el, **Beküldve** marad, és a
+   Neptunban kell ellenőrizned.
+
+Az időpontok magyar idő szerint értendők akkor is, ha a gépedet más időzónára
+állítottad (például külföldi részképzésen).
 
 A terv felhasználónként és félévenként a böngésződben tárolódik. A Neptun
 **Tervezőhöz adás** kapcsolója ettől független funkció.

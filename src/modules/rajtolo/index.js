@@ -28,7 +28,7 @@ const { showToast } = require("../../toast");
 const registrationData = require("../../registrationData");
 
 const { collectSubjects, collectCourses, registeredCredits, emptyPlan, loadPlan } = plan;
-const { statusLabel, toastTone, msUntilTarget, formatCountdown } = protocol;
+const { statusLabel, toastTone, msUntilTarget, wallClockToEpoch, formatCountdown } = protocol;
 const { createController, scheduleRun, summarize } = engine;
 const { render, openPlanner, buildLauncher, loadPeriods, loadPlannedCourses, selectedPeriod, dialogQuery } = ui;
 const { decorateCourseRows, decorateSubjectRows, rememberSubjectFromUrl } = rows;
@@ -323,7 +323,7 @@ function onStartStop(state) {
     render(state);
     return;
   }
-  const target = state.plan.startAt ? Date.parse(state.plan.startAt) : NaN;
+  const target = wallClockToEpoch(state.plan.startAt);
   if (Number.isNaN(target)) {
     state.statusText = "Adj meg egy érvényes nyitási időpontot.";
     render(state);
@@ -333,7 +333,7 @@ function onStartStop(state) {
   // is intentionally classified as unknown until its exact shape is measured, so
   // report the clear local fact before making any request.
   const period = selectedPeriod(state);
-  const closeTarget = period && period.toDate ? Date.parse(period.toDate) : NaN;
+  const closeTarget = period ? wallClockToEpoch(period.toDate) : NaN;
   if (!Number.isNaN(closeTarget) && msUntilTarget(closeTarget, interceptor.getServerOffsetMs(), Date.now()) <= 0) {
     state.statusText = "A kiválasztott tárgyjelentkezési időszak már lezárult.";
     render(state);
@@ -434,6 +434,7 @@ module.exports = {
   isCourseInPlan: plan.isCourseInPlan,
   moveUp: plan.moveUp,
   moveDown: plan.moveDown,
+  swapCourses: plan.swapCourses,
   plannedCount: rows.plannedCount,
   subjectCodeIn: rows.subjectCodeIn,
   classifyResponse: protocol.classifyResponse,
@@ -441,10 +442,14 @@ module.exports = {
   validateCourseList: protocol.validateCourseList,
   toastTone: protocol.toastTone,
   msUntilTarget: protocol.msUntilTarget,
+  wallClockToEpoch: protocol.wallClockToEpoch,
+  defaultPeriod: protocol.defaultPeriod,
   formatCountdown: protocol.formatCountdown,
   statusLabel: protocol.statusLabel,
   courseLabel: protocol.courseLabel,
   runSubject: engine.runSubject,
   runPlan: engine.runPlan,
+  summarize: engine.summarize,
+  submissionOutcome: protocol.submissionOutcome,
   createController: engine.createController,
 };

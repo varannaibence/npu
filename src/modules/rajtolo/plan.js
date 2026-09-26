@@ -350,6 +350,36 @@ function moveDown(list, index) {
   return moveUp(list, index + 1);
 }
 
+// Swaps two courses inside the group that ranks both. By id, not by index: the dialog
+// lists a pruned copy of each ranking (courses that no longer exist are left out), so
+// a position on screen is not a position in the stored ranking. Reordering that copy
+// changed nothing that was saved.
+function swapCourses(plan, subjectId, courseId, otherId) {
+  if (!courseId || !otherId || courseId === otherId) {
+    return plan;
+  }
+  let changed = false;
+  const subjects = plan.subjects.map(subject => {
+    if (subject.subjectId !== subjectId) {
+      return subject;
+    }
+    const groups = subject.groups.map(group => {
+      const a = group.ranking.indexOf(courseId);
+      const b = group.ranking.indexOf(otherId);
+      if (a === -1 || b === -1) {
+        return group;
+      }
+      const ranking = group.ranking.slice();
+      ranking[a] = otherId;
+      ranking[b] = courseId;
+      changed = true;
+      return Object.assign({}, group, { ranking });
+    });
+    return Object.assign({}, subject, { groups });
+  });
+  return changed ? Object.assign({}, plan, { subjects }) : plan;
+}
+
 module.exports = {
   collectSubjects,
   collectCourses,
@@ -374,5 +404,6 @@ module.exports = {
   isCourseInPlan,
   moveUp,
   moveDown,
+  swapCourses,
   UNTYPED_CREDIT_TYPE,
 };

@@ -10,6 +10,7 @@ const modal = require("./modal");
 const settings = require("./settings");
 const theme = require("./theme");
 const tokens = require("./neptunTokens");
+const utils = require("./utils");
 
 let registry = [];
 let idSequence = 0;
@@ -368,7 +369,6 @@ async function open() {
   const pending = Object.assign({}, flags);
   const canPersist = settings.canPersist();
   const savedColour = settings.themeColor(flags);
-  let dirty = false;
   let saving = false;
   let dialog = null;
   let saveError = null;
@@ -384,9 +384,36 @@ async function open() {
     }
     warningHost.textContent = "";
     settings.brokenDependencies(registry, pending).forEach(broken => {
-      warningHost.appendChild(alert(document, `${broken.name}: hiányozni fog ${broken.to} szükséges adat.`));
+      warningHost.appendChild(
+        alert(warningHost.ownerDocument, `${broken.name}: hiányozni fog ${broken.to} szükséges adat.`)
+      );
     });
     warningHost.hidden = warningHost.childElementCount === 0;
+  }
+
+  // Only a flipped switch needs the reload; the colour is already on screen. Saving
+  // used to reload the page even for a colour, or with nothing changed at all, and
+  // throw away whatever the user had open in Neptun.
+  function reloadNeeded() {
+    return settings.needsReload(flags, pending, registry);
+  }
+
+  function colourChanged() {
+    return settings.themeColor(pending) !== savedColour;
+  }
+
+  function saveLabel() {
+    if (!canPersist) {
+      return "Újratöltés";
+    }
+    return reloadNeeded() ? "Mentés és újratöltés" : "Mentés";
+  }
+
+  function repaintSaveLabel() {
+    const saveButton = dialog && dialog.buttons[1];
+    if (saveButton) {
+      utils.setButtonLabel(saveButton, saveLabel());
+    }
   }
 
   dialog = modal.open({
@@ -417,13 +444,13 @@ async function open() {
 
       root.appendChild(
         themeSection(doc, savedColour || theme.NEPTUN_PRIMARY, colour => {
-          dirty = true;
           if (colour === theme.NEPTUN_PRIMARY) {
             delete pending[settings.THEME_COLOR_KEY];
           } else {
             pending[settings.THEME_COLOR_KEY] = colour;
           }
           theme.apply(colour);
+          repaintSaveLabel();
         })
       );
 
@@ -438,9 +465,9 @@ async function open() {
             group.modules.forEach(module => {
               card.appendChild(
                 moduleRows(doc, module, flags, canPersist, (id, on) => {
-                  dirty = true;
                   pending[id] = on;
                   repaintWarnings();
+                  repaintSaveLabel();
                 })
               );
             });
@@ -456,12 +483,17 @@ async function open() {
     actions: [
       { label: "Mégse" },
       {
-        label: canPersist ? "Mentés és újratöltés" : "Újratöltés",
+        label: saveLabel(),
         primary: true,
         onClick() {
-          if (!dirty || !canPersist) {
+          if (!canPersist) {
             location.reload();
             return false;
+          }
+          const reload = reloadNeeded();
+          if (!reload && !colourChanged()) {
+            // Nothing to save: just close.
+            return true;
           }
 
           const saveButton = dialog && dialog.buttons[1];
@@ -472,7 +504,12 @@ async function open() {
           saving = true;
           settings.writeFlags(settings.pruneFlags(pending, registry)).then(saved => {
             if (saved) {
-              location.reload();
+              if (reload) {
+                location.reload();
+              } else if (dialog) {
+                // `saving` stays set, so onClose keeps the new colour on screen.
+                dialog.close();
+              }
               return;
             }
             saving = false;

@@ -219,4 +219,26 @@ async function run() {
   }
 }
 
+// A colour is only CSS and is already on screen, so saving just a colour (or a
+// switch flipped and flipped back) must not reload the page the user has open.
+{
+  const modules = [
+    { meta: { id: "alpha" } },
+    { meta: { id: "beta", defaultEnabled: false, options: [{ id: "opt" }] } },
+    { meta: { id: "footer", required: true } },
+  ];
+  const saved = { alpha: false };
+  assert.strictEqual(settings.needsReload(saved, { alpha: false }, modules), false, "nothing changed");
+  assert.strictEqual(
+    settings.needsReload(saved, { alpha: false, [settings.THEME_COLOR_KEY]: "#0f7a55" }, modules),
+    false,
+    "a colour-only change applies live"
+  );
+  assert.strictEqual(settings.needsReload(saved, { alpha: true }, modules), true, "a module switched back on");
+  assert.strictEqual(settings.needsReload(saved, { alpha: false, beta: true }, modules), true, "an opt-in switched on");
+  assert.strictEqual(settings.needsReload(saved, { alpha: false, "beta.opt": false }, modules), true, "an option");
+  assert.strictEqual(settings.needsReload(saved, { alpha: false, footer: false }, modules), false, "required: no-op");
+  assert.strictEqual(settings.needsReload({}, { alpha: true }, modules), false, "setting the default is not a change");
+}
+
 module.exports = { run };

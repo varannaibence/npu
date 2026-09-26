@@ -68,6 +68,45 @@ assert.strictEqual(
 assert.strictEqual(rajtolo.formatCountdown(0), "indul…");
 assert.strictEqual(rajtolo.formatCountdown(-5000), "indul…", "already past T-0 counts as starting");
 assert.strictEqual(rajtolo.formatCountdown(65000), "1p 5mp");
+assert.strictEqual(rajtolo.formatCountdown(3600000), "1ó 0p 0mp");
+assert.strictEqual(
+  rajtolo.formatCountdown((26 * 3600 + 5) * 1000),
+  "1 nap 2ó 0p 5mp",
+  "a day is not shown as 26 hours"
+);
+
+// Neptun's times are Hungarian wall-clock time whatever zone the browser is in, so a
+// student registering from abroad still starts at the Hungarian opening.
+assert.strictEqual(rajtolo.wallClockToEpoch("2026-02-02T10:00"), Date.UTC(2026, 1, 2, 9, 0), "winter: UTC+1");
+assert.strictEqual(rajtolo.wallClockToEpoch("2026-07-15T10:00:30"), Date.UTC(2026, 6, 15, 8, 0, 30), "summer: UTC+2");
+assert.strictEqual(
+  rajtolo.wallClockToEpoch("2026-10-25T01:30"),
+  Date.UTC(2026, 9, 24, 23, 30),
+  "just before the autumn switch still reads as summer time"
+);
+assert.ok(Number.isNaN(rajtolo.wallClockToEpoch("")), "an empty field is no time at all");
+assert.ok(Number.isNaN(rajtolo.wallClockToEpoch(null)));
+assert.ok(Number.isNaN(rajtolo.wallClockToEpoch("holnap reggel")));
+
+// The period picker opens on the current or next period, not on whichever is first.
+{
+  const periods = [
+    { periodId: "old", fromDate: "2026-01-20T08:00", toDate: "2026-01-30T23:59" },
+    { periodId: "next", fromDate: "2026-09-10T08:00", toDate: "2026-09-20T23:59" },
+    { periodId: "later", fromDate: "2026-09-25T08:00", toDate: "2026-10-05T23:59" },
+  ];
+  const at = text => rajtolo.wallClockToEpoch(text);
+  assert.strictEqual(rajtolo.defaultPeriod(periods, at("2026-09-01T12:00")).periodId, "next");
+  assert.strictEqual(rajtolo.defaultPeriod(periods, at("2026-09-15T12:00")).periodId, "next", "an open one counts");
+  assert.strictEqual(rajtolo.defaultPeriod(periods, at("2026-09-22T12:00")).periodId, "later");
+  assert.strictEqual(rajtolo.defaultPeriod(periods, at("2027-01-01T12:00")).periodId, "later", "all over -> latest");
+  assert.strictEqual(
+    rajtolo.defaultPeriod(periods.slice().reverse(), at("2026-09-01T12:00")).periodId,
+    "next",
+    "the server's order does not decide"
+  );
+  assert.strictEqual(rajtolo.defaultPeriod([], Date.now()), null);
+}
 
 // the response classifier: submitted / requirement / unknown
 assert.strictEqual(rajtolo.classifyResponse({ data: {}, notification: [] }).kind, "submitted");
@@ -136,6 +175,16 @@ assert.strictEqual(
 assert.strictEqual(rajtolo.toastTone("submitted"), "warn");
 assert.strictEqual(rajtolo.toastTone("full"), "error");
 assert.strictEqual(rajtolo.statusLabel("submitted"), "Beküldve — ellenőrizd a Neptunban");
+assert.strictEqual(rajtolo.toastTone("registered"), "ok", "only a confirmed registration is green");
+assert.strictEqual(rajtolo.toastTone("waitlisted"), "warn");
+assert.strictEqual(
+  rajtolo.summarize([{ kind: "registered" }, { kind: "waitlisted" }, { kind: "submitted" }, { kind: "exhausted" }]),
+  "Kész: 3/4 tárgy beküldve, ebből 1 felvéve, 1 várólistán; ellenőrizd a Neptunban."
+);
+assert.strictEqual(
+  rajtolo.summarize([{ kind: "submitted" }, { kind: "unknown" }]),
+  "Leállt ismeretlen hiba miatt (1/2 tárgy beküldve; ellenőrizd a Neptunban)."
+);
 
 // the next-combination chooser: highest-ranked non-full, non-excluded course per
 // group; null means exhausted, not "submit an empty courseIds"
@@ -404,6 +453,81 @@ async function runEngineChecks() {
     assert.strictEqual(outcome.kind, "submitted", "the forecast is not presented as a confirmed placement");
   }
 
+  // After an answered submission the same course list is read once more, and only the
+  // student's own status fields turn "beküldve" into "felvéve" or "várólistán".
+  {
+    const verifyingDeps = (after, options = {}) => {
+      const calls = [];
+      let posted = false;
+      const controller = fakeController();
+      return {
+        calls,
+        controller,
+        get: subj => {
+          calls.push(posted ? "verify" : "get");
+          if (posted && options.failVerify) {
+            return Promise.resolve({ notification: [{ description: "Hálózati hiba.", type: 3 }] });
+          }
+          const rows = [
+            { id: "c1", subjectId: subj.subjectId, isFull: false },
+            { id: "c2", subjectId: subj.subjectId, isFull: false },
+          ];
+          return Promise.resolve({ data: posted ? after(rows) : rows, notification: [] });
+        },
+        post: () => {
+          posted = true;
+          if (options.stopOnPost) {
+            controller.stopped = true;
+          }
+          return Promise.resolve({ data: {}, notification: [] });
+        },
+        delay: noDelay,
+        onEvent: () => {},
+      };
+    };
+    const twoGroups = subject("s1", [
+      { type: "Elmélet", ranking: ["c1"] },
+      { type: "Labor", ranking: ["c2"] },
+    ]);
+    const signed = rows => rows.map(row => Object.assign({}, row, { isSigned: true }));
+
+    const confirmed = verifyingDeps(signed);
+    assert.strictEqual((await rajtolo.runSubject(twoGroups, confirmed)).kind, "registered");
+    assert.deepStrictEqual(confirmed.calls, ["get", "verify"], "exactly one extra read, after the POST");
+
+    const queued = verifyingDeps(rows => [
+      Object.assign({}, rows[0], { isSigned: true }),
+      Object.assign({}, rows[1], { isOnWaitingList: true }),
+    ]);
+    assert.strictEqual(
+      (await rajtolo.runSubject(twoGroups, queued)).kind,
+      "waitlisted",
+      "one queued course means the subject is not secured"
+    );
+
+    const half = verifyingDeps(rows => [Object.assign({}, rows[0], { isSigned: true }), rows[1]]);
+    assert.strictEqual((await rajtolo.runSubject(twoGroups, half)).kind, "submitted", "half signed is not felvéve");
+
+    const unread = verifyingDeps(signed, { failVerify: true });
+    assert.strictEqual(
+      (await rajtolo.runSubject(twoGroups, unread)).kind,
+      "submitted",
+      "a failed check is not an unknown error: the run must not halt over it"
+    );
+
+    const stopped = verifyingDeps(signed, { stopOnPost: true });
+    assert.strictEqual((await rajtolo.runSubject(twoGroups, stopped)).kind, "submitted");
+    assert.deepStrictEqual(stopped.calls, ["get"], "Stop means no further request, the check included");
+
+    assert.strictEqual(rajtolo.submissionOutcome(new Map(), ["c1"]), null, "a course missing from the list");
+    assert.strictEqual(rajtolo.submissionOutcome(new Map([["c1", { isSigned: true }]]), []), null);
+    assert.strictEqual(
+      rajtolo.submissionOutcome(new Map([["c1", { isSigned: false, willBeOnWaitingList: true }]]), ["c1"]),
+      null,
+      "a forecast is never read as the student's own status"
+    );
+  }
+
   // a subject with nothing ranked is never posted to at all (fail closed by design)
   {
     let posted = false;
@@ -561,6 +685,37 @@ async function runEngineChecks() {
     assert.deepStrictEqual(attempted, [], "pre-stopped controller must not run anything");
     assert.strictEqual(outcomes[0].kind, "stopped");
   }
+
+  // The planner loads every planned subject's courses, one after the other. The pause
+  // between two loads used to replace the load itself, so only the first subject ever
+  // got its course labels and its conflict check.
+  {
+    const ui = require("../src/modules/rajtolo/ui");
+    const fetched = [];
+    const state = {
+      dialog: null,
+      plan: {
+        termId: "t1",
+        subjects: ["s1", "s2", "s3"].map(id => subject(id, [{ type: "Labor", ranking: [`${id}-c`] }])),
+      },
+      courseCatalog: new Map(),
+      courseLoads: new Set(),
+      courseLoadErrors: new Set(),
+      courseLoadQueue: null,
+      courseCatalogGeneration: 0,
+    };
+    await ui.loadPlannedCourses(state, false, entry => {
+      fetched.push(entry.subjectId);
+      return Promise.resolve({
+        data: [{ id: `${entry.subjectId}-c`, subjectId: entry.subjectId, isFull: false }],
+        notification: [],
+      });
+    });
+    assert.deepStrictEqual(fetched, ["s1", "s2", "s3"], "every planned subject is fetched, in plan order");
+    assert.ok(state.courseCatalog.get("s3").has("s3-c"), "the last subject's courses arrive too");
+    assert.strictEqual(state.courseLoadErrors.size, 0);
+    assert.strictEqual(state.courseLoadQueue, null, "the queue is released when it finishes");
+  }
 }
 
 // The countdown keeps only its currently pending timer. Retaining every elapsed
@@ -598,6 +753,30 @@ assert.ok(rajtolo.isCourseInPlan(pickPlan, "s1", lab1.id));
 // a second course of the same group is ranked after the first
 pickPlan = rajtolo.toggleCourseInPlan(pickPlan, aiSubject, lab2);
 assert.deepStrictEqual(pickPlan.subjects[0].groups.find(g => g.type === "Labor").ranking, [lab1.id, lab2.id]);
+
+// The ▲/▼ buttons list a PRUNED copy of each ranking, so a swap has to go through the
+// plan by course id. Reordering the copy by index used to change nothing that was saved.
+{
+  const stale = Object.assign({}, pickPlan, {
+    subjects: [
+      Object.assign({}, pickPlan.subjects[0], {
+        groups: [{ type: "Labor", typeId: null, ranking: ["gone", lab1.id, lab2.id] }],
+      }),
+    ],
+  });
+  const visible = rajtolo.pruneGroups(stale.subjects[0].groups, [lab1, lab2])[0].ranking;
+  assert.deepStrictEqual(visible, [lab1.id, lab2.id], "the dialog shows the ranking without the stale id");
+  const swapped = rajtolo.swapCourses(stale, "s1", visible[1], visible[0]);
+  assert.deepStrictEqual(
+    swapped.subjects[0].groups[0].ranking,
+    ["gone", lab2.id, lab1.id],
+    "moving the second visible course up swaps it with its visible neighbour in the stored plan"
+  );
+  assert.deepStrictEqual(stale.subjects[0].groups[0].ranking, ["gone", lab1.id, lab2.id], "the input is untouched");
+  assert.strictEqual(rajtolo.swapCourses(stale, "s1", lab1.id, undefined), stale, "no neighbour -> no change");
+  assert.strictEqual(rajtolo.swapCourses(stale, "s1", lab1.id, lecture.id), stale, "another group -> no change");
+  assert.strictEqual(rajtolo.swapCourses(stale, "other", lab1.id, lab2.id), stale, "another subject -> no change");
+}
 
 // a different group stays separate (one course per group, not per subject)
 pickPlan = rajtolo.toggleCourseInPlan(pickPlan, aiSubject, lecture);

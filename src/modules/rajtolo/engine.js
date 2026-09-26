@@ -2,12 +2,41 @@
 // whole engine - including "Stop actually stops" - is testable with fakes.
 const interceptor = require("../../interceptor");
 const { collectCourses } = require("./plan");
-const { classifyResponse, validateCourseList, chooseCombination, msUntilTarget } = require("./protocol");
+const {
+  classifyResponse,
+  validateCourseList,
+  chooseCombination,
+  submissionOutcome,
+  msUntilTarget,
+} = require("./protocol");
 const { liveGet, livePost, liveDelay } = require("./net");
 const { MAX_ATTEMPTS } = require("./constants");
 
 // --- The run engine. Every network and timing effect is injected via `deps`, so the
 // whole thing - including "Stop actually stops" - is testable with fakes. ---
+
+// One more read of the same course list right after a submission was answered, so
+// the result can say "felvéve" or "várólistán" instead of only "beküldve". Stop is
+// respected, since it means no further requests, and a failed or unreadable answer
+// never halts the run: the outcome simply stays "submitted".
+async function verifySubmission(subject, courseIds, deps) {
+  const submitted = { kind: "submitted" };
+  if (deps.controller.stopped) {
+    return submitted;
+  }
+  let body;
+  try {
+    body = await deps.get(subject);
+  } catch (e) {
+    return submitted;
+  }
+  if (validateCourseList(body).kind !== "ok") {
+    return submitted;
+  }
+  const courseIndex = collectCourses(body).get(subject.subjectId) || new Map();
+  const kind = submissionOutcome(courseIndex, courseIds);
+  return kind ? { kind } : submitted;
+}
 
 // Compose the best still-available combination, POST, classify, then either stop or
 // retry the next-best up to MAX_ATTEMPTS. Never posts a subject with nothing ranked.
@@ -36,7 +65,7 @@ async function runSubject(subject, deps) {
     const body = await deps.post(subject, courseIds);
     const result = classifyResponse(body);
     if (result.kind === "submitted") {
-      return result;
+      return verifySubmission(subject, courseIds, deps);
     }
     if (result.kind === "requirement" || result.kind === "unknown" || result.kind === "notOpen") {
       return result;
@@ -79,14 +108,21 @@ async function runPlan(plan, deps) {
 }
 
 function summarize(outcomes) {
-  const submitted = outcomes.filter(o => o.kind === "submitted").length;
+  const count = kind => outcomes.filter(o => o.kind === kind).length;
   if (outcomes.some(o => o.kind === "notOpen")) {
     return "A tárgyjelentkezési időszak még nincs nyitva.";
   }
+  const registered = count("registered");
+  const waitlisted = count("waitlisted");
+  const sent = count("submitted") + registered + waitlisted;
+  const details = [registered ? `${registered} felvéve` : "", waitlisted ? `${waitlisted} várólistán` : ""].filter(
+    Boolean
+  );
+  const sentText = `${sent}/${outcomes.length} tárgy beküldve${details.length ? `, ebből ${details.join(", ")}` : ""}`;
   const haltedByUnknown = outcomes.some(o => o.kind === "unknown");
   return haltedByUnknown
-    ? `Leállt ismeretlen hiba miatt (${submitted}/${outcomes.length} tárgy beküldve; ellenőrizd a Neptunban).`
-    : `Kész: ${submitted}/${outcomes.length} tárgy beküldve; ellenőrizd a Neptunban.`;
+    ? `Leállt ismeretlen hiba miatt (${sentText}; ellenőrizd a Neptunban).`
+    : `Kész: ${sentText}; ellenőrizd a Neptunban.`;
 }
 
 function createController() {

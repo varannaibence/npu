@@ -2,6 +2,29 @@
 
 ## Következő kiadás
 
+**Rajtoló**
+
+- Beküldés után a Rajtoló egyszer újra lekéri a tárgy kurzuslistáját, és a
+  Neptun saját állapotmezői alapján „Felvéve” vagy „Várólistára került”
+  eredményt mutat. Ha ez nem dönthető el, „Beküldve” marad, és a futás ettől
+  nem áll le.
+- Javítva: a tervező csak az első tárgy kurzusadatait töltötte be, a többinél
+  a „Kurzusadat betöltése…” felirat és az ütközésjelzés nem frissült.
+- Javítva: a kurzusok sorrendjét állító ▲/▼ gombok a kurzusadatok betöltése
+  után nem mentették az új sorrendet.
+- Az időpontokat magyar idő szerint értelmezi akkor is, ha a böngésző más
+  időzónában van; eddig ilyenkor egy vagy több órával később indult volna.
+- Az időszakválasztó a folyamatban lévő vagy következő időszakot jelöli ki
+  alapból, nem a lista elsőjét, ami gyakran már lezárult.
+- A visszaszámláló egy napnál hosszabb várakozásnál napokat is mutat.
+
+**Egyéb**
+
+- Beállítások: a csak színtémát érintő mentés nem tölti újra az oldalt, és
+  változtatás nélkül a gomb egyszerűen bezárja a panelt.
+- Táblázatos kurzuslista: bekapcsolt szűrő mellett minden újrarajzolás
+  áthelyezte a sorokat, ami a billentyűzetfókuszt is elvihette. Javítva.
+
 ## 3.0.4 — 2026. szept. 26.
 
 - Frissítés jelzése: amikor a Tampermonkey frissíti az NPU-t, a következő
