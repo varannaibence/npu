@@ -29,7 +29,7 @@ const footerReport = {
 const issues = footerBranding.buildIssuesLink(null, footerReport);
 assert.strictEqual(
   issues.href,
-  "https://github.com/varannaibence/npu/issues",
+  "https://github.com/varannaibence/npu-uj-neptunhoz/issues",
   "ours goes to the tracker, not to the university"
 );
 assert.strictEqual(issues.rel, "noopener noreferrer", "target=_blank without this leaks window.opener");
@@ -66,7 +66,11 @@ fakeSubmit.ownerDocument = { createElement: fakeEl, createElementNS: (ns, tag) =
 const banner = loginBanner.buildBanner(fakeSubmit, "Neptun PowerUp! v2.5.0");
 
 assert.strictEqual(banner.tagName, "A", "the name has to be reachable, not just readable");
-assert.strictEqual(banner.href, "https://github.com/varannaibence/npu", "points at the fork, not upstream");
+assert.strictEqual(
+  banner.href,
+  "https://github.com/varannaibence/npu-uj-neptunhoz",
+  "points at the fork, not upstream"
+);
 assert.strictEqual(banner.rel, "noopener noreferrer", "target=_blank without this leaks window.opener");
 // the visible label is a clone of the page's own button, so it inherits the real
 // styling - no colour of ours anywhere

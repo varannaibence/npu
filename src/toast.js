@@ -1,6 +1,7 @@
-// Our own toast stack, in the same corner as the app's push notifications.
-const tokens = require("../../neptunTokens");
-const utils = require("../../utils");
+// Our own toast stack, in the same corner as the app's push notifications. Shared by
+// the Rajtoló and the update notice.
+const tokens = require("./neptunTokens");
+const utils = require("./utils");
 
 const TOAST_ID = "npu-toast-stack";
 const TOAST_MS = 4000;
@@ -78,7 +79,9 @@ const TOAST_TONES = {
   error: { mark: "!", color: "#c0392b" },
 };
 
-function showToast(text, tone) {
+// `options.link` ({ href, label }) adds a link after the text; `options.durationMs`
+// overrides how long it stays, 0 meaning until closed.
+function showToast(text, tone, options = {}) {
   injectToastCss();
   const card = document.createElement("div");
   card.setAttribute("role", tone === "error" ? "alert" : "status");
@@ -98,6 +101,15 @@ function showToast(text, tone) {
   const msg = document.createElement("span");
   msg.style.cssText = "min-width:0;overflow-wrap:anywhere;";
   msg.textContent = text;
+  if (options.link) {
+    const link = document.createElement("a");
+    link.href = options.link.href;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = options.link.label;
+    link.style.cssText = "margin-left:6px;color:inherit;font-weight:600;text-decoration:underline";
+    msg.appendChild(link);
+  }
   const close = document.createElement("button");
   close.type = "button";
   close.textContent = "✕";
@@ -112,7 +124,10 @@ function showToast(text, tone) {
   body.appendChild(close);
   card.appendChild(body);
   toastStack().appendChild(card);
-  setTimeout(() => card.remove(), TOAST_MS);
+  const duration = typeof options.durationMs === "number" ? options.durationMs : TOAST_MS;
+  if (duration > 0) {
+    setTimeout(() => card.remove(), duration);
+  }
 }
 
 module.exports = { showToast };

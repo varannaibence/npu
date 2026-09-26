@@ -6,7 +6,7 @@
 
 **Gyorsabb, átláthatóbb és kiszámíthatóbb Neptun — az új, Angular-alapú felülethez.**
 
-[![Verify code](https://github.com/varannaibence/npu/actions/workflows/verify.yml/badge.svg)](https://github.com/varannaibence/npu/actions/workflows/verify.yml)
+[![Verify code](https://github.com/varannaibence/npu-uj-neptunhoz/actions/workflows/verify.yml/badge.svg)](https://github.com/varannaibence/npu-uj-neptunhoz/actions/workflows/verify.yml)
 [![Latest release](https://img.shields.io/github/v/release/varannaibence/npu-uj-neptunhoz?label=kiad%C3%A1s)](https://github.com/varannaibence/npu-uj-neptunhoz/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Status: early phase](https://img.shields.io/badge/%C3%A1llapot-korai%20f%C3%A1zis-orange.svg)
@@ -71,6 +71,7 @@ lépnek működésbe.
 | Visszatérés az előző oldalra | Bejelentkezés után felajánlja a legutóbb használt oldal megnyitását. | Be |
 | Munkamenet életben tartása | Aktív használat mellett megújítja a hamarosan lejáró munkamenetet; tétlen lapot nem tart életben. | Ki |
 | Verzió és hibabejelentés | Az NPU neve és verziója a bejelentkező oldalon és a láblécben, hibabejelentő linkkel. | Be |
+| Frissítés jelzése | Amikor a Tampermonkey frissíti az NPU-t, a következő betöltéskor egyszer jelzi az új verziót, az újdonságok linkjével. | Be |
 
 ## Telepítés
 
@@ -219,7 +220,8 @@ A terv felhasználónként és félévenként a böngésződben tárolódik. A N
 ## Adatvédelem
 
 Az NPU a böngésződben fut, és semmilyen adatot nem küld saját szerverre. A
-Rajtoló tervei és a beállítások helyben maradnak, jelszót a v3 nem tárol.
+Rajtoló tervei, a beállítások és a legutóbb látott NPU-verzió helyben maradnak,
+jelszót a v3 nem tárol.
 
 <details>
 <summary>Mi történik a régi (2.x) adatokkal?</summary>
@@ -274,7 +276,7 @@ tervet.
 
 </details>
 
-**Hibabejelentés** a [GitHub issue trackerben](https://github.com/varannaibence/npu/issues):
+**Hibabejelentés** a [GitHub issue trackerben](https://github.com/varannaibence/npu-uj-neptunhoz/issues):
 add meg a verziót (a lap alján olvasható), az intézményt, az oldalt és a
 reprodukálás lépéseit. Képernyőkép jöhet, de jelszót, sütit, belépési tokent vagy
 teljes hálózati exportot ne csatolj.

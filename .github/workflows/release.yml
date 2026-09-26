@@ -54,15 +54,18 @@ jobs:
           # Never move package.json backwards when an older version is re-released.
           if [ "$(printf '%s\n%s\n' "${current}" "${GITHUB_REF_NAME#v}" | sort -V | tail -n1)" = "${GITHUB_REF_NAME#v}" ]; then
             npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version --allow-same-version
+            # "## Következő kiadás" becomes this version's section, so the README
+            # below shows the changelog rather than the GitHub release body.
+            node tools/sync-releases.js --promote "${GITHUB_REF_NAME#v}"
           fi
           gh api --paginate --slurp "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
             | jq 'add | map(select(.draft == false and .prerelease == false)) | .[0:3]' \
             | node tools/sync-releases.js
-          if git diff --quiet -- README.md package.json package-lock.json; then
+          if git diff --quiet -- README.md docs/CHANGELOG.md package.json package-lock.json; then
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add README.md package.json package-lock.json
+          git add README.md docs/CHANGELOG.md package.json package-lock.json
           git commit -m "chore: sync ${GITHUB_REF_NAME} version and latest releases"
           git push origin "HEAD:${DEFAULT_BRANCH}"

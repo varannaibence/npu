@@ -19,6 +19,7 @@ const modules = [
   require("./modules/rajtolo"),
   require("./modules/creditBreakdown"),
   require("./modules/footerBranding"),
+  require("./modules/updateNotice"),
 ];
 
 // Before anything else: Angular fires its first API call almost immediately.

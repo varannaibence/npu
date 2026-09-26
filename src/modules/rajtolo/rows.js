@@ -1,7 +1,7 @@
 // What the Rajtoló adds to the page itself: a switch on every course row and a count
 // badge on every subject row.
 const { toggleCourseInPlan, isCourseInPlan, savePlan } = require("./plan");
-const { showToast } = require("./toast");
+const { showToast } = require("../../toast");
 const { render } = require("./ui");
 const utils = require("../../utils");
 const badge = require("../../badge");

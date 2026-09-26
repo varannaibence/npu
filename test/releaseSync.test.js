@@ -1,6 +1,7 @@
 const assert = require("assert");
 const {
   changelogNotes,
+  promoteNextRelease,
   renderReleaseBlock,
   replaceReleaseBlock,
   stableReleases,
@@ -49,3 +50,31 @@ assert.strictEqual(
 
 const source = `before\n${START}\nold\n${END}\nafter`;
 assert.strictEqual(replaceReleaseBlock(source, block), `before\n${block}\nafter`);
+
+// Release time: "Következő kiadás" becomes the tagged version's section, so the README
+// shows the changelog and not whatever the GitHub release body says.
+const pending =
+  "# Változásnapló\n\n## Következő kiadás\n\n- Rajtoló javítás\n\n## 3.0.2 — 2026. szept. 23.\n\n- Logó\n";
+const promoted = promoteNextRelease(pending, "v3.0.3", "2026. szept. 26.");
+assert.strictEqual(
+  promoted,
+  "# Változásnapló\n\n## Következő kiadás\n\n## 3.0.3 — 2026. szept. 26.\n\n- Rajtoló javítás\n\n## 3.0.2 — 2026. szept. 23.\n\n- Logó\n",
+  "the pending notes move under the new version, with an empty section left above"
+);
+assert.strictEqual(changelogNotes(promoted, "v3.0.3"), "- Rajtoló javítás", "the README sync then finds them");
+assert.strictEqual(changelogNotes(promoted, "v3.0.2"), "- Logó", "the previous release keeps its own notes");
+assert.strictEqual(
+  promoteNextRelease(promoted, "3.0.3", "x"),
+  promoted,
+  "a re-run of the same release changes nothing"
+);
+assert.strictEqual(
+  promoteNextRelease(promoted, "3.0.4", "x"),
+  promoted,
+  "an empty pending section is not turned into an empty release"
+);
+assert.strictEqual(
+  promoteNextRelease("## Következő kiadás\n\n- Utolsó\n", "1.0.0", "ma"),
+  "## Következő kiadás\n\n## 1.0.0 — ma\n\n- Utolsó\n\n",
+  "a pending section at the end of the file is promoted too"
+);

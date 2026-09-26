@@ -29,7 +29,7 @@ Nyisd meg a **Tárgyfelvétel** oldalt, és nézd meg ezt a négyet:
 3. Egy tárgyat lenyitva látszik-e a kurzusok férőhelye (pl. `regisztrált / limit`).
 4. A lap alján ott van-e a `Neptun PowerUp!` felirat.
 
-Ha mind a négy megvan, nyiss egy [issue-t](https://github.com/varannaibence/npu/issues)
+Ha mind a négy megvan, nyiss egy [issue-t](https://github.com/varannaibence/npu-uj-neptunhoz/issues)
 `Ellenőrizve: <intézmény>` címmel, és írd bele a Neptun webcímét és az NPU
 verzióját, amely a lap alján olvasható. A négy pont önmagában csak részleges
 ellenőrzés, ezért a táblázatba is így kerül be.

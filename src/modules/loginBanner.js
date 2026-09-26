@@ -9,7 +9,7 @@ const npuLogo = require("../logo");
 const ROUTE = "/hallgato_ng/login";
 // A real class, not a hashed one.
 const SUBMIT_SELECTOR = "button.login-right__submit, form button[type=submit]";
-const PROJECT_URL = "https://github.com/varannaibence/npu";
+const PROJECT_URL = "https://github.com/varannaibence/npu-uj-neptunhoz";
 
 // Shown in the settings panel; `id` is also the key the switch is stored under.
 const meta = {
