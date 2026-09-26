@@ -33,7 +33,12 @@ function publishedDate(value) {
   const date = new Date(value);
   return Number.isNaN(date.getTime())
     ? "—"
-    : new Intl.DateTimeFormat("hu-HU", { year: "numeric", month: "short", day: "numeric" }).format(date);
+    : new Intl.DateTimeFormat("hu-HU", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        timeZone: "Europe/Budapest",
+      }).format(date);
 }
 
 function changelogNotes(changelog, tagName) {
@@ -46,6 +51,31 @@ function changelogNotes(changelog, tagName) {
   const section = changelog.slice(match.index + match[0].length);
   const nextHeading = section.search(/^##\s+/m);
   return section.slice(0, nextHeading < 0 ? section.length : nextHeading).trim();
+}
+
+const NEXT_HEADING = /^##\s+Következő kiadás[^\n]*$/im;
+
+// The changelog is written under "## Következő kiadás" between releases. At release
+// time that section becomes the version's own, with a fresh empty one above it, so
+// changelogNotes finds it. Unchanged when the version already has a section or there
+// is nothing waiting to be released.
+function promoteNextRelease(changelog, version, date) {
+  const plain = String(version).replace(/^v/i, "");
+  const existing = new RegExp(`^##\\s+v?${escapeRegExp(plain)}(?:\\s|$)`, "im");
+  const match = NEXT_HEADING.exec(changelog);
+  if (!match || existing.test(changelog)) {
+    return changelog;
+  }
+  const bodyStart = match.index + match[0].length;
+  const rest = changelog.slice(bodyStart);
+  const nextHeading = rest.search(/^##\s+/m);
+  const bodyEnd = nextHeading < 0 ? changelog.length : bodyStart + nextHeading;
+  const notes = changelog.slice(bodyStart, bodyEnd).trim();
+  if (!notes) {
+    return changelog;
+  }
+  const promoted = `${match[0]}\n\n## ${plain} — ${date}\n\n${notes}\n\n`;
+  return `${changelog.slice(0, match.index)}${promoted}${changelog.slice(bodyEnd)}`;
 }
 
 function rewriteChangelogLinks(notes) {
@@ -120,7 +150,20 @@ function syncReadme(releases, repository, readmePath, changelog = "") {
   return false;
 }
 
-if (require.main === module) {
+if (require.main === module && process.argv[2] === "--promote") {
+  // Run by the release workflow before the README sync: node tools/sync-releases.js --promote 3.0.3
+  try {
+    const changelog = fs.readFileSync(CHANGELOG_PATH, "utf8");
+    const next = promoteNextRelease(changelog, process.argv[3], publishedDate(new Date()));
+    if (next !== changelog) {
+      fs.writeFileSync(CHANGELOG_PATH, next);
+    }
+    console.log(next !== changelog ? "CHANGELOG release section created." : "CHANGELOG already current.");
+  } catch (error) {
+    console.error(error.message);
+    process.exitCode = 1;
+  }
+} else if (require.main === module) {
   try {
     const repository = process.env.GITHUB_REPOSITORY || "varannaibence/npu";
     const releases = JSON.parse(fs.readFileSync(0, "utf8"));
@@ -133,4 +176,13 @@ if (require.main === module) {
   }
 }
 
-module.exports = { END, START, changelogNotes, renderReleaseBlock, replaceReleaseBlock, stableReleases };
+module.exports = {
+  END,
+  START,
+  changelogNotes,
+  promoteNextRelease,
+  publishedDate,
+  renderReleaseBlock,
+  replaceReleaseBlock,
+  stableReleases,
+};
